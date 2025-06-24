@@ -65,6 +65,74 @@
     </a>
 </div>
 
+<form id="filterForm" class="form-inline mt-4">
+    <div class="form-group">
+        <label for="Sensor_ID">Sensor ID:</label>
+        <input type="number" id="Sensor_ID" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="TimeStampStart">Start Time:</label>
+        <input type="datetime-local" id="TimeStampStart" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="TimeStampEnd">End Time:</label>
+        <input type="datetime-local" id="TimeStampEnd" class="form-control" />
+    </div>
+
+	<div class="form-group">
+        <label for="Movement_Type">Movement Type:</label>
+        <select id="Movement_Type" class="form-control">
+			<option value="Pedestrian">Pedestrian</option>
+			<option value="Vehicle">Vehicle</option>
+			<option value="Cyclist">Cyclist</option>
+		</select>
+    </div>
+
+    <div class="form-group">
+        <label for="Direction">Direction:</label>
+        <select id="Direction" class="form-control">
+			<option value="N">North</option>
+			<option value="S">South</option>
+			<option value="E">East</option>
+			<option value="W">West</option>
+		</select>
+    </div>
+
+	<div class="form-group">
+        <label for="Season">Season:</label>
+        <select id="Season" class="form-control">
+			<option value="Summer">Summer</option>
+			<option value="Autumn">Autumn</option>
+			<option value="Winter">Winter</option>
+			<option value="Spring">Spring</option>
+		</select>
+    </div>
+
+	<div class="form-group">
+        <label for="Public_Transport_Ref">Transport Nearby:</label>
+        <select id="Public_Transport_Ref" class="form-control">
+			<option value="true">Yes</option>
+			<option value="false">No</option>
+		</select>
+    </div>
+
+	<div class="form-group">
+        <label for="VU_Schedule_Ref">Near VU Schedule:</label>
+        <select id="VU_Schedule_Ref" class="form-control">
+			<option value="true">Yes</option>
+			<option value="false">No</option>
+		</select>
+    </div>
+
+
+	<button type="submit" class="btn btn-primary">Apply Filters</button>
+</form>
+	
+	
+	
+	
 <div class="row">
     <div class="col-md-3">
         <h2>Application uses</h2>
