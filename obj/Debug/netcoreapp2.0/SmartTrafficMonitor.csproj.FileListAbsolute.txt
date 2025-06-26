@@ -1,0 +1,11 @@
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\netcoreapp2.0\SmartTrafficMonitor.deps.json
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\netcoreapp2.0\SmartTrafficMonitor.runtimeconfig.json
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\netcoreapp2.0\SmartTrafficMonitor.runtimeconfig.dev.json
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\netcoreapp2.0\SmartTrafficMonitor.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\netcoreapp2.0\SmartTrafficMonitor.pdb
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.csprojAssemblyReference.cache
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.csproj.CoreCompileInputs.cache
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.AssemblyInfoInputs.cache
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.AssemblyInfo.cs
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\netcoreapp2.0\SmartTrafficMonitor.pdb
