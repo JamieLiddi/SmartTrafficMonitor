@@ -1,6 +1,7 @@
 ﻿body {
-    padding-top: 50px;
+    padding-top: 75px;
     padding-bottom: 20px;
+    background: #f8f9fa;
 }
 
 /* Wrapping element */
@@ -24,6 +25,11 @@
 /* QR code generator */
 #qrCode {
     margin: 15px;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /*Darker blue when hover */
+    transform: scale(1.05); /* Slighly grow effect*/
 }
 
 /* Hide/rearrange for smaller screens */
