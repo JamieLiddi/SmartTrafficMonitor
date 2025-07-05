@@ -1,83 +1,83 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="container mt-4">
     <form id="filterForm" class="form-inline mt-4">
 
-        <!-- FIRST ROW-->
+        <!-- FORM 1 FIRST ROW-->
         <div class="row g-3">
 
             <div class="col-md-3">
-                    <label for="Sensor_ID">Sensor ID:</label>
-                    <input type="number" id="Sensor_ID" class="form-control" />
-                </div>
-           
+                <label for="Sensor_ID">Sensor ID:</label>
+                <input type="number" id="Sensor_ID" class="form-control" />
+            </div>
+
 
             <div class="col-md-3">
-                    <label for="TimeStampStart">Start Time:</label>
-                    <input type="datetime-local" id="TimeStampStart" class="form-control" />
-                </div>
-           
-            <div class="col-md-3">
-                    <label for="TimeStampEnd">End Time:</label>
-                    <input type="datetime-local" id="TimeStampEnd" class="form-control" />
-                </div>
-          
+                <label for="TimeStampStart">Start Time:</label>
+                <input type="datetime-local" id="TimeStampStart" class="form-control" />
+            </div>
 
             <div class="col-md-3">
-                    <label for="Movement_Type">Movement Type:</label>
-                    <select id="Movement_Type" class="form-control">
-                        <option value="Pedestrian">Pedestrian</option>
-                        <option value="Vehicle">Vehicle</option>
-                        <option value="Cyclist">Cyclist</option>
-                    </select>
-                
+                <label for="TimeStampEnd">End Time:</label>
+                <input type="datetime-local" id="TimeStampEnd" class="form-control" />
+            </div>
+
+
+            <div class="col-md-3">
+                <label for="Movement_Type">Movement Type:</label>
+                <select id="Movement_Type" class="form-control">
+                    <option value="Pedestrian">Pedestrian</option>
+                    <option value="Vehicle">Vehicle</option>
+                    <option value="Cyclist">Cyclist</option>
+                </select>
+
             </div>
         </div>
 
 
-        <!-- SECOND ROW-->
+        <!-- FORM 1 SECOND ROW-->
         <div class="row g-3 mt-2">
             <div class="col-md-3">
-                    <label for="Direction">Direction:</label>
-                    <select id="Direction" class="form-control">
-                        <option value="N">North</option>
-                        <option value="S">South</option>
-                        <option value="E">East</option>
-                        <option value="W">West</option>
-                    </select>
-                
+                <label for="Direction">Direction:</label>
+                <select id="Direction" class="form-control">
+                    <option value="N">North</option>
+                    <option value="S">South</option>
+                    <option value="E">East</option>
+                    <option value="W">West</option>
+                </select>
+
             </div>
 
 
             <div class="col-md-3">
                 <label for="Season">Season:</label>
                 <select id="Season" class="form-control">
-                        <option value="Summer">Summer</option>
-                        <option value="Autumn">Autumn</option>
-                        <option value="Winter">Winter</option>
-                        <option value="Spring">Spring</option>
-                </select>  
+                    <option value="Summer">Summer</option>
+                    <option value="Autumn">Autumn</option>
+                    <option value="Winter">Winter</option>
+                    <option value="Spring">Spring</option>
+                </select>
             </div>
             <div class="col-md-3">
-                    <label for="Public_Transport_Ref">Transport Nearby:</label>
-                    <select id="Public_Transport_Ref" class="form-control">
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                    </select>
+                <label for="Public_Transport_Ref">Transport Nearby:</label>
+                <select id="Public_Transport_Ref" class="form-control">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
             </div>
             <div class="col-md-3">
-                    <label for="VU_Schedule_Ref">Near VU Schedule:</label>
-                    <select id="VU_Schedule_Ref" class="form-control">
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                    </select>
-              
+                <label for="VU_Schedule_Ref">Near VU Schedule:</label>
+                <select id="VU_Schedule_Ref" class="form-control">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+
             </div>
         </div>
 
-        <!-- THIRD BUTTON ROW-->
+        <!-- FORM 1 THIRD BUTTON ROW-->
         <div class="row g-3 mt-3">
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary">Apply Filters</button>
@@ -85,7 +85,55 @@
         </div>
     </form>
 
+    <!-- FORM 2: Heatmap Generation-->
+    <form id="filterForm" class="form-inline mt-5">
+
+        <!-- FORM 2 FIRST ROW-->
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <label for="HeatmapZone">Select Zone:</label>
+                <select id="HeatmapZone" class="form-control">
+                    <option value="Footscray Park">Footscray Park</option>
+                    <option value="VU Campus">VU Campus</option>
+                </select>
+            </div>
+
+
+            <div class="col-md-4">
+                <label for="HeatmapPeriod">Select Time Period:</label>
+                <select id="HeatmapPeriod" class="form-control">
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Seasonal">Seasonal</option>
+                </select>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-warning w-100">Generate Heatmap</button>
+            </div>
+
+        </div>
+
+    </form>
+    <!--HEATMAP PREVIEW-->
+    <div class="mt-4">
+        <h4>Heatmap Preview</h4>
+        <iframe id="heatmapFrame" src="" width="100" height="500" style="border:1px solid #ccc;"></iframe>
+    </div>
+
 </div>
-	
-	
+
+//for heatmapForm
+<script>
+    document.getElementByID('heatmapForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const zone = document.getElementById('HeatmapZone').value;
+        const period = document.getElementByID('HeatmapPeriod').value;
+        const params = new URLSearchParams({ zone, period }).toString();
+        document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
+    });
+</script>
+
+
 
