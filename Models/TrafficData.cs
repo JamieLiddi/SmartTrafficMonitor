@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +16,9 @@ namespace SmartTrafficMonitor.Models
         public string Season { get; set; }
         public int FootTrafficCount { get; set; }
         public int VehicleCount { get; set; }
+        public bool PublicTransportRef { get; set; }
+        public bool VUScheduleRef {  get; set; }
+        public string HeatmapPeriod { get; set; } //e.g. Weekly, Monthly, Seasonal
         //Any more needed
     }
 }
