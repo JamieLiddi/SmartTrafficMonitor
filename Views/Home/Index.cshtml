@@ -126,8 +126,6 @@
         <iframe id="heatmapFrame" src="" width="100" height="500" style="border:1px solid #ccc;"></iframe>
     </div>
 
-</div>
-
 //for heatmapForm
 <script>
     document.getElementByID('heatmapForm').addEventListener('submit', function (e) {
@@ -138,6 +136,10 @@
         document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
     });
 </script>
+
+</div>
+
+
 
 
 
