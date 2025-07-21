@@ -21,4 +21,22 @@ namespace SmartTrafficMonitor.Models
         public string HeatmapPeriod { get; set; } //e.g. Weekly, Monthly, Seasonal
         //Any more needed
     }
+    public class TrafficFilterModel
+    {
+        //Creating Traffic Data values
+        public string Zone { get; set; }
+        public string HeatmapPeriod { get; set; } //e.g. Weekly, Monthly, Seasonal
+        public string MovementType { get; set; } //e.g pedestrian, vehicle, cyclist
+        public string Direction { get; set; }
+        public string Season { get; set; }
+        public int FootTrafficCount { get; set; }
+        public int VehicleCount { get; set; }
+        public bool PublicTransportRef { get; set; }
+        public bool VUScheduleRef {  get; set; }
+        public DateTime TimeStamp { get; set; }
+        public DateTime TimeStampStart { get; set; }
+        public DateTime TimeStampEnd { get; set; }
+        public string ExportFormat { get; set; } // "csv" or "pdf"
+        //Any more needed
+    }
 }
