@@ -40,3 +40,38 @@ namespace SmartTrafficMonitor.Models
         //Any more needed
     }
 }
+
+namespace SmartTrafficMonitor.Services
+{
+    public static class HeatmapService
+    {
+        public static string GenerateHeatmap(string zone, string period)
+        {
+            // Stub implementation: return a dummy heatmap URL
+            return $"https://example.com/heatmap?zone={zone}&period={period}";
+        }
+    }
+    public static class ExportService
+    {
+        public static (byte[] Content) GenerateCsv(List<TrafficData> data)
+        {
+            // Stub implementation: return empty CSV content
+            return (System.Text.Encoding.UTF8.GetBytes("Id,SensorId,TimeStamp,..."));
+        }
+
+        public static (byte[] Content) GeneratePdf(List<TrafficData> data)
+        {
+            // Stub implementation: return empty PDF content
+            return (new byte[0]);
+        }
+    }
+    public static class DataService
+    {
+        public static List<TrafficData> GetFilteredData(FilterModel filters)
+        {
+            // Stub implementation: return an empty list
+            return new List<TrafficData>();
+        }
+    }
+}
+
