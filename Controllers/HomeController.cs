@@ -49,7 +49,7 @@ namespace SmartTrafficMonitor.Controllers
         }
         [HttpGet]
         [Route("api/export")]
-        public IActionResult ExportData([FromQuery] FilterModel filters)
+        public IActionResult ExportData([FromQuery] TrafficFilterModel filters)
         { 
             var data = DataService.GetFilteredData(filters);
 
