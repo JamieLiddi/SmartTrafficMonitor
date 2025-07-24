@@ -128,10 +128,10 @@
 
     //for heatmapForm
     <script>
-        document.getElementByID('heatmapForm').addEventListener('submit', function (e) {
+        document.getElementById('heatmapForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const zone = document.getElementById('HeatmapZone').value;
-            const period = document.getElementByID('HeatmapPeriod').value;
+            const period = document.getElementById('HeatmapPeriod').value;
             const params = new URLSearchParams({ zone, period }).toString();
             document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
         });
