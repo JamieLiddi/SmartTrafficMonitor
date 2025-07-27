@@ -53,21 +53,21 @@ namespace SmartTrafficMonitor.Services
     }
     public static class ExportService
     {
-        public static (byte[] Content) GenerateCsv(List<TrafficData> data)
+        public static byte[] GenerateCsv(List<TrafficData> data)
         {
             // Stub implementation: return empty CSV content
-            return (System.Text.Encoding.UTF8.GetBytes("Id,SensorId,TimeStamp,..."));
+            return System.Text.Encoding.UTF8.GetBytes("Id,SensorId,TimeStamp,...");
         }
 
-        public static (byte[] Content) GeneratePdf(List<TrafficData> data)
+        public static byte[] GeneratePdf(List<TrafficData> data)
         {
             // Stub implementation: return empty PDF content
-            return (new byte[0]);
+            return new byte[0];
         }
     }
     public static class DataService
     {
-        public static List<TrafficData> GetFilteredData(FilterModel filters)
+        public static List<TrafficData> GetFilteredData(TrafficFilterModel filters)
         {
             // Stub implementation: return an empty list
             return new List<TrafficData>();
