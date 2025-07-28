@@ -3,7 +3,7 @@
 }
 
 <div class="container mt-4">
-    <form id="filterForm">
+    <form id="filterForm" method="get" action="/api/export">
 
         <!-- FIRST ROW-->
         <div class="row g-4">
@@ -126,18 +126,32 @@
         <iframe id="heatmapFrame" src="" width="100" height="500" style="border:1px solid #ccc;"></iframe>
     </div>
 
+    <!--for heatmapForm-->
+    <script>
+        document.getElementById('heatmapForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var zone = document.getElementById('HeatmapZone').value;
+            var period = document.getElementById('HeatmapPeriod').value;
+            var params = new URLSearchParams({ zone, period }).toString();
+            document.getElementById('heatmapFrame').src = `/api/heatmap?' + params;
+        });
+    </script>
+
+    <div class="summary-box mt-4">
+        <h4>SUMMARY</h4>
+        <p>This dashboard helps visualize traffic patterns across Footscray using Smart Sensors. With these, you can filter data, generate heatmaps, and export reports.
+It supports pedestrian, vehicle, and cyclist data, and provides export options for reporting purposes.</p>
+        <ul>
+            <li>Real-time and historical traffic insights</li>    
+            <li>Interactive heatmap visualization</li>
+            <li>Export reports in CSV or PDF format</li>
+            <li>Zone-based and seasonal traffic analysis</li>
+        </ul>
+    </div>
+
 </div>
 
-//for heatmapForm
-<script>
-    document.getElementByID('heatmapForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const zone = document.getElementById('HeatmapZone').value;
-        const period = document.getElementByID('HeatmapPeriod').value;
-        const params = new URLSearchParams({ zone, period }).toString();
-        document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
-    });
-</script>
+
 
 
 

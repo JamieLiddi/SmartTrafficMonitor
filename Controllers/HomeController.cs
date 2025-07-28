@@ -35,6 +35,8 @@ namespace SmartTrafficMonitor.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
+
+    [ApiController]
     public class HeatmapController : Controller
     {
         [HttpGet]
@@ -47,7 +49,7 @@ namespace SmartTrafficMonitor.Controllers
         }
         [HttpGet]
         [Route("api/export")]
-        public IActionResult ExportData([FromQuery] FilterModel filters)
+        public IActionResult ExportData([FromQuery] TrafficFilterModel filters)
         { 
             var data = DataService.GetFilteredData(filters);
 
