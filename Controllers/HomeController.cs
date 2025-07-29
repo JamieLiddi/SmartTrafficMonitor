@@ -36,7 +36,7 @@ namespace SmartTrafficMonitor.Controllers
         }
     }
 
-    [ApiController]
+   
     public class HeatmapController : Controller
     {
         [HttpGet]
@@ -55,13 +55,13 @@ namespace SmartTrafficMonitor.Controllers
 
             if (filters.ExportFormat == "csv")
             {
-                var csvFile = ExportService.GenerateCsv(data);
-                return File(csvFile.Content, "text/csv", "traffic_report.csv");
+                var csv = ExportService.GenerateCsv(data);
+                return File(csv, "text/csv", "traffic_report.csv");
             }
             else if (filters.ExportFormat == "pdf")
             {
-                var pdfFile = ExportService.GeneratePdf(data);
-                return File(pdfFile.Content, "application/pdf", "traffic_report.pdf");
+                var pdf = ExportService.GeneratePdf(data);
+                return File(pdf, "application/pdf", "traffic_report.pdf");
             }
             return BadRequest("Unsupported export format.");          
         }
