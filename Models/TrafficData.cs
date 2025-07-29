@@ -56,7 +56,7 @@ namespace SmartTrafficMonitor.Services
         public static byte[] GenerateCsv(List<TrafficData> data)
         {
             // Stub implementation: return empty CSV content
-            return System.Text.Encoding.UTF8.GetBytes("Id,SensorId,TimeStamp,...");
+            return System.Text.Encoding.UTF8.GetBytes("Id,SensorId,TimeStamp,MovementType,Direction,Season,FootTrafficCount,VehicleCount,PublicTransportRef,VUScheduleRef,HeatmapPeriod\n");
         }
 
         public static byte[] GeneratePdf(List<TrafficData> data)

@@ -37,28 +37,27 @@ namespace SmartTrafficMonitor.Controllers
     }
 
     [ApiController]
+    [Route("api")]
     public class HeatmapController : Controller
     {
-        [HttpGet]
-        [Route("api/heatmap")]
+        [HttpGet("heatmap")]
         public IActionResult GetHeatmap([FromQuery] TrafficFilterModel filters)
-        { //This would call service to generate a heatmap URL or HTML
+        {
             var heatmapUrl = HeatmapService.GenerateHeatmap(filters.Zone, filters.HeatmapPeriod);
-            return Redirect(heatmapUrl); 
-          // Or return View with embedded map
+            return View("HeatmapView", model: heatmapUrl); // Create a Razor view that embeds the heatmap
         }
-        [HttpGet]
-        [Route("api/export")]
+
+        [HttpGet("export")]
         public IActionResult ExportData([FromQuery] TrafficFilterModel filters)
         { 
             var data = DataService.GetFilteredData(filters);
 
-            if (filters.ExportFormat == "csv")
+            if (filters.ExportFormat.ToLower() == "csv")
             {
                 var csvFile = ExportService.GenerateCsv(data);
                 return File(csvFile.Content, "text/csv", "traffic_report.csv");
             }
-            else if (filters.ExportFormat == "pdf")
+            else if (filters.ExportFormat.ToLower() == "pdf")
             {
                 var pdfFile = ExportService.GeneratePdf(data);
                 return File(pdfFile.Content, "application/pdf", "traffic_report.pdf");
