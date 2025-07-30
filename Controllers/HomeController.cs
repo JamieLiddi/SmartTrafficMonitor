@@ -36,7 +36,7 @@ namespace SmartTrafficMonitor.Controllers
         }
     }
 
-    [ApiController]
+
     [Route("api")]
     public class HeatmapController : Controller
     {
@@ -44,7 +44,7 @@ namespace SmartTrafficMonitor.Controllers
         public IActionResult GetHeatmap([FromQuery] TrafficFilterModel filters)
         {
             var heatmapUrl = HeatmapService.GenerateHeatmap(filters.Zone, filters.HeatmapPeriod);
-            return View("HeatmapView", model: heatmapUrl); // Create a Razor view that embeds the heatmap
+            return Redirect(heatmapUrl);
         }
 
         [HttpGet("export")]

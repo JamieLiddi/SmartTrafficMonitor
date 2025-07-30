@@ -41,15 +41,14 @@
     padding-right: 15px;
 }
 
-/* Carousel */
-.carousel-caption p {
-    font-size: 20px;
-    line-height: 1.4;
-}
 
-/* Make .svg files in the carousel display properly in older browsers */
-.carousel-inner .item img[src$=".svg"] {
+/*Heat Map Frame*/
+#heatmapFrame {
     width: 100%;
+    height: 600px;
+    display: block;
+    margin: 20px auto;
+    border: none;
 }
 
 /* QR code generator */
