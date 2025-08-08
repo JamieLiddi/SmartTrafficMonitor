@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting; // for IWebHostEnvironment
 using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
-using Npgsql.EntityFrameworkCore.PostgreSQL; // You don't actually need to import this explicitly, but ensure the package is installed
 
 namespace SmartTrafficMonitor
 {
@@ -18,34 +18,41 @@ namespace SmartTrafficMonitor
 
         public IConfiguration Configuration { get; }
 
-        // Only one ConfigureServices method here:
         public void ConfigureServices(IServiceCollection services)
         {
+            // Register EF Core with Npgsql provider
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddMvc();
+            // Add controllers with views and enable endpoint routing (default)
+            services.AddControllersWithViews();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseBrowserLink();
+                // app.UseBrowserLink(); // optional, requires package Microsoft.VisualStudio.Web.BrowserLink
                 app.UseDeveloperExceptionPage();
             }
             else
             {
                 app.UseExceptionHandler("/Home/Error");
+                // Consider adding HSTS here if on HTTPS
+                // app.UseHsts();
             }
 
             app.UseStaticFiles();
 
-            app.UseMvc(routes =>
+            app.UseRouting();
+
+            app.UseAuthorization(); // add if you use auth
+
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(
+                endpoints.MapControllerRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
