@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SmartTrafficMonitor.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartTrafficMonitor.Models
 {
+     [Table("traffictable")]
     public class TrafficData
     {
         //Creating Traffic Data values
@@ -18,7 +20,7 @@ namespace SmartTrafficMonitor.Models
         public int FootTrafficCount { get; set; }
         public int VehicleCount { get; set; }
         public bool PublicTransportRef { get; set; }
-        public bool VUScheduleRef {  get; set; }
+        public bool VUScheduleRef { get; set; }
         public string HeatmapPeriod { get; set; } //e.g. Weekly, Monthly, Seasonal
         //Any more needed
     }

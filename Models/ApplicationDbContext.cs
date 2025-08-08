@@ -9,7 +9,15 @@ namespace SmartTrafficMonitor.Models
         {
         }
 
-        // DbSet for TrafficData table
+        // DbSet for TrafficData model
         public DbSet<TrafficData> TrafficDatas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Map TrafficData entity to existing "traffictable" table
+            modelBuilder.Entity<TrafficData>().ToTable("traffictable");
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }
