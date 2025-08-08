@@ -9,7 +9,7 @@ namespace SmartTrafficMonitor.Models
         {
         }
 
-        // Add DbSets for your tables here, for example:
-        // public DbSet<TrafficData> TrafficDatas { get; set; }
+        // DbSet for TrafficData table
+        public DbSet<TrafficData> TrafficDatas { get; set; }
     }
 }
