@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = SmartTrafficMonitor
-build_property.ProjectDir = C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\
+build_property.ProjectDir = C:\Users\gamma\Downloads\STM2\SmartTrafficMonitor\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false
