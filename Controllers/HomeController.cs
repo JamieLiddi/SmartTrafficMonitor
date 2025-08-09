@@ -56,19 +56,27 @@ namespace SmartTrafficMonitor.Controllers
         [HttpGet("export")]
         public IActionResult ExportData([FromQuery] TrafficFilterModel filters)
         {
+            if (string.IsNullOrEmpty(filters.ExportFormat))
+                return BadRequest("ExportFormat is required.");
+
+            var exportFormat = filters.ExportFormat.ToLower();
+
             var data = DataService.GetFilteredData(filters);
 
-            if (filters.ExportFormat.ToLower() == "csv")
+            if (exportFormat == "csv")
             {
                 var csv = ExportService.GenerateCsv(data);
                 return File(csv, "text/csv", "traffic_report.csv");
             }
-            else if (filters.ExportFormat.ToLower() == "pdf")
+            else if (exportFormat == "pdf")
             {
                 var pdf = ExportService.GeneratePdf(data);
                 return File(pdf, "application/pdf", "traffic_report.pdf");
             }
-            return BadRequest("Unsupported export format.");
+            else
+            {
+                return BadRequest("Unsupported export format.");
+            }
         }
     }
 }
