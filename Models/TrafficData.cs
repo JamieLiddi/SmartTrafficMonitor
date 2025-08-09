@@ -58,8 +58,6 @@ namespace SmartTrafficMonitor.Models
         public DateTime? TimeStampStart { get; set; }
         public DateTime? TimeStampEnd { get; set; }
         public string ExportFormat { get; set; } // "csv" or "pdf"
-        public TrafficFilterModel Filters { get; set; }
-        public List<TrafficData> Results { get; set; }
     }
 }
 
