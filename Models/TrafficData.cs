@@ -34,6 +34,9 @@ namespace SmartTrafficMonitor.Models
 
         [Column("vu_schedule_ref")]
         public bool VuScheduleRef { get; set; }
+
+        [Column("ExportFormat")]
+        public string ExportFormat { get; set; } // "csv" or "pdf"
     }
 
     // View/filter model (not an EF entity) – you can include extra fields freely here
