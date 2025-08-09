@@ -16,22 +16,13 @@ namespace SmartTrafficMonitor.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
-        {
-            // Query traffic data from database
-            var trafficDataList = _context.TrafficDatas.ToList();
-
-            // Pass the data to the view (you need to create a view that accepts this)
-            return View(trafficDataList);
-        }
-
         public IActionResult Index(TrafficFilterModel filters)
         {
             // Query traffic data from DataService
-            var trafficDataList = DataService.GetFilteredData(filters);
+            filters.Results = DataService.GetFilteredData(_context, filters);
 
             // Pass the data to the view
-            return View(trafficDataList);
+            return View(filters);
         }
 
         public IActionResult About()
