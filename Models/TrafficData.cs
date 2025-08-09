@@ -20,6 +20,9 @@ namespace SmartTrafficMonitor.Models
         [Column("movement_type")]
         public string MovementType { get; set; }
 
+        [Column("direction")]
+        public string Direction { get; set; }
+
         [Column("season")]
         public string Season { get; set; }
 
@@ -55,6 +58,8 @@ namespace SmartTrafficMonitor.Models
         public DateTime? TimeStampStart { get; set; }
         public DateTime? TimeStampEnd { get; set; }
         public string ExportFormat { get; set; } // "csv" or "pdf"
+        public TrafficFilterModel Filters { get; set; }
+        public List<TrafficData> Results { get; set; }
     }
 }
 
@@ -107,10 +112,26 @@ namespace SmartTrafficMonitor.Services
 
     public static class DataService
     {
-        public static List<TrafficData> GetFilteredData(TrafficFilterModel filters)
+        public static List<TrafficData> GetFilteredData(ApplicationDbContext context, TrafficFilterModel filters)
         {
-            // Stub implementation
-            return new List<TrafficData>();
+            var query = context.TrafficDatas.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filters.Direction)) 
+            {
+                query = query.Where(td => td.Direction.Contains(filters.Direction));
+            }
+
+            if (filters.TimeStampStart.HasValue)
+            {
+                query = query.Where(td => td.TimeStamp >= filters.TimeStampStart.Value);
+            }
+
+            if (filters.TimeStampEnd.HasValue)
+            {
+                query = query.Where(td => td.TimeStamp <= filters.TimeStampEnd.Value);
+            }
+
+            return query.ToList();
         }
     }
 }
