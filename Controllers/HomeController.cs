@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using SmartTrafficMonitor.Models;
 using SmartTrafficMonitor.Services;
@@ -16,13 +15,20 @@ namespace SmartTrafficMonitor.Controllers
             _context = context;
         }
 
-        public IActionResult Index(TrafficFilterModel filters)
+        // Accept filters from the querystring
+        public IActionResult Index([FromQuery] TrafficFilterModel filters)
         {
-            // Query traffic data from DataService
-            filters.Results = DataService.GetFilteredData(_context, filters);
+            // Get data using the DataService (requires db + filters)
+            var results = DataService.GetFilteredData(_context, filters);
 
-            // Pass the data to the view
-            return View(filters);
+            // Build a view model instead of putting results on the filter
+            var vm = new DashboardViewModel
+            {
+                Filters = filters,
+                Results = results
+            };
+
+            return View(vm);
         }
 
         public IActionResult About()
@@ -43,9 +49,17 @@ namespace SmartTrafficMonitor.Controllers
         }
     }
 
+    [ApiController]
     [Route("api")]
     public class HeatmapController : Controller
     {
+        private readonly ApplicationDbContext _context;
+
+        public HeatmapController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet("heatmap")]
         public IActionResult GetHeatmap([FromQuery] TrafficFilterModel filters)
         {
@@ -56,26 +70,23 @@ namespace SmartTrafficMonitor.Controllers
         [HttpGet("export")]
         public IActionResult ExportData([FromQuery] TrafficFilterModel filters)
         {
-            if (string.IsNullOrEmpty(filters.ExportFormat))
+            if (string.IsNullOrEmpty(filters?.ExportFormat))
                 return BadRequest("ExportFormat is required.");
 
-            var exportFormat = filters.ExportFormat.ToLower();
+            var data = DataService.GetFilteredData(_context, filters);
 
-            var data = DataService.GetFilteredData(filters);
+            switch (filters.ExportFormat.ToLowerInvariant())
+            {
+                case "csv":
+                    var csv = ExportService.GenerateCsv(data);
+                    return File(csv, "text/csv", "traffic_report.csv");
 
-            if (exportFormat == "csv")
-            {
-                var csv = ExportService.GenerateCsv(data);
-                return File(csv, "text/csv", "traffic_report.csv");
-            }
-            else if (exportFormat == "pdf")
-            {
-                var pdf = ExportService.GeneratePdf(data);
-                return File(pdf, "application/pdf", "traffic_report.pdf");
-            }
-            else
-            {
-                return BadRequest("Unsupported export format.");
+                case "pdf":
+                    var pdf = ExportService.GeneratePdf(data);
+                    return File(pdf, "application/pdf", "traffic_report.pdf");
+
+                default:
+                    return BadRequest("Unsupported export format.");
             }
         }
     }

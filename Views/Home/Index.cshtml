@@ -1,101 +1,129 @@
 @{
     ViewData["Title"] = "Home Page";
+
+    // Pull current values from the querystring (safe even if missing)
+    string q(string name) => Context.Request.Query[name].ToString();
+    var qSensorId = q("SensorId");
+    var qFrom = q("From");
+    var qTo = q("To");
+    var qMovementType = q("MovementType");
+    var qDirection = q("Direction");
+    var qSeason = q("Season");
+    var qPt = q("PublicTransportRef");
+    var qVu = q("VUScheduleRef");
 }
 
 <div class="container mt-4">
-    <form id="filterForm" method="get" action="/api/export">
-
-        <!-- FIRST ROW-->
+    <!-- FILTERS -> reload Index with results -->
+    <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
+        <!-- FIRST ROW -->
         <div class="row g-4">
-
             <div class="col-md-3">
-                <label for="Sensor_ID">Sensor ID:</label>
-                <input type="number" id="Sensor_ID" class="form-control" />
-            </div>
-
-
-            <div class="col-md-3">
-                <label for="TimeStampStart">Start Time:</label>
-                <input type="datetime-local" id="TimeStampStart" class="form-control" />
+                <label for="SensorId">Sensor ID:</label>
+                <input type="number" id="SensorId" name="SensorId" class="form-control" value="@qSensorId" />
             </div>
 
             <div class="col-md-3">
-                <label for="TimeStampEnd">End Time:</label>
-                <input type="datetime-local" id="TimeStampEnd" class="form-control" />
+                <label for="From">Start Time:</label>
+                <input type="datetime-local" id="From" name="From" class="form-control" value="@qFrom" />
             </div>
 
+            <div class="col-md-3">
+                <label for="To">End Time:</label>
+                <input type="datetime-local" id="To" name="To" class="form-control" value="@qTo" />
+            </div>
 
             <div class="col-md-3">
-                <label for="Movement_Type">Movement Type:</label>
-                <select id="Movement_Type" class="form-control">
-                    <option value="Pedestrian">Pedestrian</option>
-                    <option value="Vehicle">Vehicle</option>
-                    <option value="Cyclist">Cyclist</option>
+                <label for="MovementType">Movement Type:</label>
+                <select id="MovementType" name="MovementType" class="form-control">
+                    <option value="">(Any)</option>
+                    <option value="Pedestrian" selected="@(qMovementType=="Pedestrian" ? "selected" : null)">Pedestrian</option>
+                    <option value="Vehicle"    selected="@(qMovementType=="Vehicle"    ? "selected" : null)">Vehicle</option>
+                    <option value="Cyclist"    selected="@(qMovementType=="Cyclist"    ? "selected" : null)">Cyclist</option>
                 </select>
-
             </div>
         </div>
 
-
-        <!-- SECOND ROW-->
+        <!-- SECOND ROW -->
         <div class="row g-4 mt-2">
             <div class="col-md-3">
                 <label for="Direction">Direction:</label>
-                <select id="Direction" class="form-control">
-                    <option value="N">North</option>
-                    <option value="S">South</option>
-                    <option value="E">East</option>
-                    <option value="W">West</option>
+                <select id="Direction" name="Direction" class="form-control">
+                    <option value="">(Any)</option>
+                    <option value="N" selected="@(qDirection=="N" ? "selected" : null)">North</option>
+                    <option value="S" selected="@(qDirection=="S" ? "selected" : null)">South</option>
+                    <option value="E" selected="@(qDirection=="E" ? "selected" : null)">East</option>
+                    <option value="W" selected="@(qDirection=="W" ? "selected" : null)">West</option>
                 </select>
-
             </div>
-
 
             <div class="col-md-3">
                 <label for="Season">Season:</label>
-                <select id="Season" class="form-control">
-                    <option value="Summer">Summer</option>
-                    <option value="Autumn">Autumn</option>
-                    <option value="Winter">Winter</option>
-                    <option value="Spring">Spring</option>
+                <select id="Season" name="Season" class="form-control">
+                    <option value="">(Any)</option>
+                    <option value="Summer" selected="@(qSeason=="Summer" ? "selected" : null)">Summer</option>
+                    <option value="Autumn" selected="@(qSeason=="Autumn" ? "selected" : null)">Autumn</option>
+                    <option value="Winter" selected="@(qSeason=="Winter" ? "selected" : null)">Winter</option>
+                    <option value="Spring" selected="@(qSeason=="Spring" ? "selected" : null)">Spring</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <label for="Public_Transport_Ref">Transport Nearby:</label>
-                <select id="Public_Transport_Ref" class="form-control">
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="VU_Schedule_Ref">Near VU Schedule:</label>
-                <select id="VU_Schedule_Ref" class="form-control">
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                </select>
 
+            <div class="col-md-3">
+                <label for="PublicTransportRef">Transport Nearby:</label>
+                <select id="PublicTransportRef" name="PublicTransportRef" class="form-control">
+                    <option value="">(Any)</option>
+                    <option value="true"  selected="@(qPt=="true"  ? "selected" : null)">Yes</option>
+                    <option value="false" selected="@(qPt=="false" ? "selected" : null)">No</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="VUScheduleRef">Near VU Schedule:</label>
+                <select id="VUScheduleRef" name="VUScheduleRef" class="form-control">
+                    <option value="">(Any)</option>
+                    <option value="true"  selected="@(qVu=="true"  ? "selected" : null)">Yes</option>
+                    <option value="false" selected="@(qVu=="false" ? "selected" : null)">No</option>
+                </select>
             </div>
         </div>
 
-        <!-- FORM 1 THIRD BUTTON ROW-->
+        <!-- BUTTON ROW -->
         <div class="row g-3 mt-3">
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
             </div>
-        </div>
-        <div class="row">
-
-
         </div>
     </form>
 
-    <!-- FORM 2: Heatmap Generation-->
-    <form id="heatmapForm" class="form-inline mt-5">
+    <!-- EXPORT (reuses current filters) -->
+    <form id="exportForm" class="form-inline mt-3" method="get" action="/api/export">
+        <!-- Hidden fields copied from filterForm on submit -->
+        <input type="hidden" name="SensorId" />
+        <input type="hidden" name="From" />
+        <input type="hidden" name="To" />
+        <input type="hidden" name="MovementType" />
+        <input type="hidden" name="Direction" />
+        <input type="hidden" name="Season" />
+        <input type="hidden" name="PublicTransportRef" />
+        <input type="hidden" name="VUScheduleRef" />
 
-
-        <!-- FORM 2 FIRST ROW-->
         <div class="row g-3">
+            <div class="col-md-3">
+                <label for="ExportFormat">Export Format</label>
+                <select id="ExportFormat" name="ExportFormat" class="form-control w-100">
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-secondary w-100">Export Report</button>
+            </div>
+        </div>
+    </form>
 
+    <!-- HEATMAP -->
+    <form id="heatmapForm" class="form-inline mt-5">
+        <div class="row g-3">
             <div class="col-md-4">
                 <label for="HeatmapZone">Select Zone:</label>
                 <select id="HeatmapZone" class="form-control">
@@ -103,7 +131,6 @@
                     <option value="VU Campus">VU Campus</option>
                 </select>
             </div>
-
 
             <div class="col-md-4">
                 <label for="HeatmapPeriod">Select Time Period:</label>
@@ -117,33 +144,19 @@
             <div class="col-md-4 d-flex align-items-end">
                 <button type="submit" class="btn btn-warning w-100">Generate Heatmap</button>
             </div>
-
         </div>
-
     </form>
-    <!--HEATMAP PREVIEW-->
+
+    <!-- HEATMAP PREVIEW -->
     <div class="mt-4">
         <h4>Heatmap Preview</h4>
-        <iframe id="heatmapFrame" src="" width="100" height="500" style="border:1px solid #ccc;"></iframe>
+        <iframe id="heatmapFrame" src="" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
     </div>
-
-    <!--for heatmapForm-->
-    <script>
-        document.getElementById('heatmapForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var zone = document.getElementById('HeatmapZone').value;
-            var period = document.getElementById('HeatmapPeriod').value;
-            var params = new URLSearchParams({ zone, period }).toString();
-            document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
-        });
-
-    </script>
 
     <div class="summary-box mt-4">
         <h4>SUMMARY</h4>
         <p>
-            This dashboard helps visualize traffic patterns across Footscray using Smart Sensors. With these, you can filter data, generate heatmaps, and export reports.
-            It supports pedestrian, vehicle, and cyclist data, and provides export options for reporting purposes.
+            This dashboard helps visualize traffic patterns across Footscray using Smart Sensors. You can filter data, generate heatmaps, and export reports.
         </p>
         <ul>
             <li>Real-time and historical traffic insights</li>
@@ -152,10 +165,30 @@
             <li>Zone-based and seasonal traffic analysis</li>
         </ul>
     </div>
-
 </div>
 
+@section Scripts {
+<script>
+    // Copy filter values into export form before submit
+    document.getElementById('exportForm').addEventListener('submit', function (e) {
+        const src = document.getElementById('filterForm');
+        const dst = e.target;
 
+        const fields = ["SensorId","From","To","MovementType","Direction","Season","PublicTransportRef","VUScheduleRef"];
+        fields.forEach(name => {
+            const srcEl = src.querySelector(`[name="${name}"]`);
+            const dstEl = dst.querySelector(`input[name="${name}"]`);
+            if (srcEl && dstEl) dstEl.value = srcEl.value;
+        });
+    });
 
-
-
+    // Heatmap: use exact param names to match TrafficFilterModel
+    document.getElementById('heatmapForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var Zone = document.getElementById('HeatmapZone').value;
+        var HeatmapPeriod = document.getElementById('HeatmapPeriod').value;
+        var params = new URLSearchParams({ Zone, HeatmapPeriod }).toString();
+        document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
+    });
+</script>
+}
