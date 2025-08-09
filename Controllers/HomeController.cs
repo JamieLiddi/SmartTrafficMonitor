@@ -25,6 +25,15 @@ namespace SmartTrafficMonitor.Controllers
             return View(trafficDataList);
         }
 
+        public IActionResult Index(TrafficFilterModel filters)
+        {
+            // Query traffic data from DataService
+            var trafficDataList = DataService.GetFilteredData(filters);
+
+            // Pass the data to the view
+            return View(trafficDataList);
+        }
+
         public IActionResult About()
         {
             ViewData["Message"] = "Your application description page.";
