@@ -127,6 +127,13 @@ namespace SmartTrafficMonitor.Services
             if (filters == null)
                 return q.OrderByDescending(t => t.Timestamp).ToList();
 
+            //Normalising Time value to UTC
+            if (filters.From.HasValue)
+                filters.From = DateTime.SpecifyKind(filters.From.Value, DateTimeKind.Utc);
+            
+            if (filters.To.HasValue)
+                filters.To = DateTime.SpecifyKind(filters.To.Value, DateTimeKind.Utc);
+
             if (filters.SensorId.HasValue)
                 q = q.Where(t => t.SensorId == filters.SensorId.Value);
 
