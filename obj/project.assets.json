@@ -710,25 +710,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\jjlid\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "C:\\Users\\gamma\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\jjlid\\source\\repos\\SmartTrafficMonitor\\SmartTrafficMonitor\\SmartTrafficMonitor.csproj",
+      "projectUniqueName": "C:\\Capstone Project\\SmartTrafficMonitor\\SmartTrafficMonitor.csproj",
       "projectName": "SmartTrafficMonitor",
-      "projectPath": "C:\\Users\\jjlid\\source\\repos\\SmartTrafficMonitor\\SmartTrafficMonitor\\SmartTrafficMonitor.csproj",
-      "packagesPath": "C:\\Users\\jjlid\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\jjlid\\source\\repos\\SmartTrafficMonitor\\SmartTrafficMonitor\\obj\\",
+      "projectPath": "C:\\Capstone Project\\SmartTrafficMonitor\\SmartTrafficMonitor.csproj",
+      "packagesPath": "C:\\Users\\gamma\\.nuget\\packages\\",
+      "outputPath": "C:\\Capstone Project\\SmartTrafficMonitor\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\jjlid\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\gamma\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -737,7 +735,6 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -756,7 +753,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.200"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net6.0": {
@@ -786,7 +783,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302\\RuntimeIdentifierGraph.json"
       }
     }
   }
