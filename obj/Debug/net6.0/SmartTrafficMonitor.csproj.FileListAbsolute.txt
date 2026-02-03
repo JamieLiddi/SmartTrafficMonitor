@@ -85,3 +85,43 @@ C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\ne
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.pdb
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.genruntimeconfig.cache
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\ref\SmartTrafficMonitor.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\appsettings.Development.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\web.config
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\appsettings.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\bundleconfig.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.staticwebassets.runtime.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.staticwebassets.endpoints.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.exe
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.deps.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.runtimeconfig.json
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.pdb
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Npgsql.dll
+C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.csproj.AssemblyReference.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\rpswa.dswa.cache.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.AssemblyInfoInputs.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.AssemblyInfo.cs
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.csproj.CoreCompileInputs.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.MvcApplicationPartsAssemblyInfo.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.RazorAssemblyInfo.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.RazorAssemblyInfo.cs
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.sourcelink.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\rjimswa.dswa.cache.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\rjsmrazor.dswa.cache.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\rjsmcshtml.dswa.cache.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\scopedcss\bundle\SmartTrafficMonitor.styles.css
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.build.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.build.json.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.development.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.build.endpoints.json
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTra.5090A476.Up2Date
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.dll
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\refint\SmartTrafficMonitor.dll
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.pdb
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.genruntimeconfig.cache
+C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\ref\SmartTrafficMonitor.dll
