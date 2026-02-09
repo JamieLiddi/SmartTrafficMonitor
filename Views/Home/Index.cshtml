@@ -1,12 +1,15 @@
+@model SmartTrafficMonitor.Models.DashboardViewModel
 @{
     ViewData["Title"] = "Home Page";
 
     // Pull current values from the querystring (safe even if missing)
     string q(string name) => Context.Request.Query[name].ToString();
+    ? Context.Request.Query[name].ToString() : ""; // default to empty string if not present
     var qSensorId = q("SensorId");
     var qFrom = q("From");
     var qTo = q("To");
     var qMovementType = q("MovementType");
+    var qDirection = q("Direction");
     var qSeason = q("Season");
     var qPt = q("PublicTransportRef");
     var qVu = q("VUScheduleRef");
@@ -42,8 +45,21 @@
                 </select>
             </div>
         </div>
+<!-- DIRECTION -->
+<div class="row g-4 mt-2">
+    <div class="col-md-3">
+        <label for="Direction">Direction:</label>
+        <select id="Direction" name="Direction" class="form-control">
+            <option value="">(Any)</option>
+            <option value="N" selected="@(qDirection=="N" ? "selected" : null)">North</option>
+            <option value="S" selected="@(qDirection=="S" ? "selected" : null)">South</option>
+            <option value="E" selected="@(qDirection=="E" ? "selected" : null)">East</option>
+            <option value="W" selected="@(qDirection=="W" ? "selected" : null)">West</option>
+        </select>
+    </div>
+</div>
 
-        <!-- SECOND ROW -->
+        <!-- FILTER ROW (Season & refs) -->
         <div class="row g-4 mt-2">
 
             <div class="col-md-3">
@@ -96,6 +112,7 @@
         <input type="hidden" name="PublicTransportRef" />
         <input type="hidden" name="VUScheduleRef" />
 
+        <!-- Choosing EXPORT format -->
         <div class="row g-3">
             <div class="col-md-3">
                 <label for="ExportFormat">Export Format</label>
@@ -142,6 +159,51 @@
         <iframe id="heatmapFrame" src="" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
     </div>
 
+<!-- RESULTS TABLE -->
+@if (Model?.Results != null && Model.Results.Count > 0)
+{
+    <div class="mt-4">
+        <h4>Filtered Results</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Sensor ID</th>
+                    <th>Timestamp</th>
+                    <th>Movement</th>
+                    <th>Direction</th>
+                    <th>Season</th>
+                    <th>Foot Traffic</th>
+                    <th>Vehicles</th>
+                    <th>Transport Nearby</th>
+                    <th>Near VU</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Results)
+                {
+                    <tr>
+                        <td>@r.SensorId</td>
+                        <td>@r.Timestamp</td>
+                        <td>@r.MovementType</td>
+                        <td>@r.Direction</td>
+                        <td>@r.Season</td>
+                        <td>@r.FootTrafficCount</td>
+                        <td>@r.VehicleCount</td>
+                        <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
+                        <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="mt-4">
+        <p>No data found for the selected filters.</p>
+    </div>
+}
+
     <div class="summary-box mt-4">
         <h4>SUMMARY</h4>
         <p>
@@ -156,22 +218,25 @@
     </div>
 </div>
 
+
 @section Scripts {
 <script>
-    // Copy filter values into export form before submit
+    // Copy current filter values to export form on submit
     document.getElementById('exportForm').addEventListener('submit', function (e) {
-        const src = document.getElementById('filterForm');
-        const dst = e.target;
+    const src = document.getElementById('filterForm');
+    const dst = e.target;
 
-        const fields = ["SensorId","From","To","MovementType","Direction","Season","PublicTransportRef","VUScheduleRef"];
-        fields.forEach(name => {
-            const srcEl = src.querySelector(`[name="${name}"]`);
-            const dstEl = dst.querySelector(`input[name="${name}"]`);
-            if (srcEl && dstEl) dstEl.value = srcEl.value;
-        });
+    const fields = ["SensorId","From","To","MovementType","Direction","Season","PublicTransportRef","VUScheduleRef"];
+    fields.forEach(name => {
+        const srcEl = src.querySelector(`[name="${name}"]`);
+        const dstEl = dst.querySelector(`[name="${name}"]`);
+
+       // Only copy if both source and destination elements exist
+        if (srcEl && dstEl) dstEl.value = srcEl.value || "";
     });
+});
 
-    // Heatmap: use exact param names to match TrafficFilterModel
+    // Load heatmap in iframe based on form selections
     document.getElementById('heatmapForm').addEventListener('submit', function (e) {
         e.preventDefault();
         var Zone = document.getElementById('HeatmapZone').value;
