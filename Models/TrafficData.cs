@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;                  // Where(), OrderBy(), ToList()
+using System.Linq;                 
 using Microsoft.EntityFrameworkCore;
 
 namespace SmartTrafficMonitor.Models
@@ -10,19 +10,24 @@ namespace SmartTrafficMonitor.Models
     [Table("traffictable", Schema = "public")]
     public class TrafficData
     {
+        //Primary Key Row
         [Key]
+        [Column("id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        // Sensor Location Identifier  
         [Column("sensor_id")]
         public int SensorId { get; set; }
 
-        // "timestamp" is a reserved word; mapping avoids quoting issues
         [Column("timestamp")]
         public DateTime Timestamp { get; set; }
 
         [Column("movement_type")]
         public string MovementType { get; set; }
 
-        // No such column in DB — keep as a transient property if you want it in the UI
-        [NotMapped]
+        // Direction of movement 
+        [Column("direction")]
         public string Direction { get; set; }
 
         [Column("season")]
@@ -53,7 +58,12 @@ namespace SmartTrafficMonitor.Models
         public string Direction { get; set; }        // UI-only (no DB column)
         public string Season { get; set; }           // Summer/Autumn/Winter/Spring/empty
         public bool? PublicTransportRef { get; set; }
-        public bool? VUScheduleRef { get; set; }     // UI uses VU..., entity uses Vu...
+        public bool? VUScheduleRef { get; set; }     
+        [NotMapped] //Not curretnly a database column
+        public bool? VuScheduleRef{
+            get {return VUScheduleRef;}
+            set { VUScheduleRef = value; }
+        }
 
         public int? FootTrafficCount { get; set; }
         public int? VehicleCount { get; set; }
@@ -82,7 +92,16 @@ namespace SmartTrafficMonitor.Services
         public static string GenerateHeatmap(string zone, string period)
         {
             // Stub implementation
-            return $"https://example.com/heatmap?zone={zone}&period={period}";
+            
+
+
+            
+            // StiLL TO DO!!!
+            
+
+
+
+            return $"/Heatmap/View?zone={Uri.EscapeDataString(zone ?? "")}&period={Uri.EscapeDataString(period ?? "")}";
         }
     }
 
@@ -92,7 +111,7 @@ namespace SmartTrafficMonitor.Services
         {
             // CSV columns match the DB schema exactly
             var sb = new StringBuilder();
-            sb.AppendLine("sensor_id,timestamp,movement_type,season,foot_traffic_count,vehicle_count,public_transport_ref,vu_schedule_ref");
+            sb.AppendLine("sensor_id,timestamp,movement_type,direction,season,foot_traffic_count,vehicle_count,public_transport_ref,vu_schedule_ref");
 
             foreach (var r in data)
             {
@@ -100,7 +119,7 @@ namespace SmartTrafficMonitor.Services
 
                 sb.Append(r.SensorId).Append(',');
                 sb.Append(r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")).Append(',');
-                sb.Append(Esc(r.MovementType)).Append(',');
+                sb.Append(Esc(r.Direction)).Append(',');
                 sb.Append(Esc(r.Season)).Append(',');
                 sb.Append(r.FootTrafficCount).Append(',');
                 sb.Append(r.VehicleCount).Append(',');
@@ -127,12 +146,15 @@ namespace SmartTrafficMonitor.Services
             if (filters == null)
                 return q.OrderByDescending(t => t.Timestamp).ToList();
 
-            //Normalising Time value to UTC
-            if (filters.From.HasValue)
-                filters.From = DateTime.SpecifyKind(filters.From.Value, DateTimeKind.Utc);
-            
-            if (filters.To.HasValue)
-                filters.To = DateTime.SpecifyKind(filters.To.Value, DateTimeKind.Utc);
+
+            var from = filters.From ?? filters.TimeStampStart ?? filters.TimeStamp;
+            var to   = filters.To   ?? filters.TimeStampEnd   ?? filters.TimeStamp;
+
+            if (from.HasValue)
+                from = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
+            if (to.HasValue)
+                to = DateTime.SpecifyKind(to.Value, DateTimeKind.Utc);
+
 
             if (filters.SensorId.HasValue)
                 q = q.Where(t => t.SensorId == filters.SensorId.Value);
@@ -140,26 +162,27 @@ namespace SmartTrafficMonitor.Services
             if (!string.IsNullOrWhiteSpace(filters.MovementType))
                 q = q.Where(t => t.MovementType == filters.MovementType);
 
-            // Direction filter removed — no column in DB
+            if (!string.IsNullOrWhiteSpace(filters.Direction))
+            q = q.Where(t => t.Direction == filters.Direction);
 
+            //Filter by Season
             if (!string.IsNullOrWhiteSpace(filters.Season))
                 q = q.Where(t => t.Season == filters.Season);
 
+            //Filter by Transport and Schedule references
             if (filters.PublicTransportRef.HasValue)
                 q = q.Where(t => t.PublicTransportRef == filters.PublicTransportRef.Value);
 
+            //Filter by VU Schedule reference
             if (filters.VUScheduleRef.HasValue)
                 q = q.Where(t => t.VuScheduleRef == filters.VUScheduleRef.Value);
 
+            //Filter by traffic counts
             if (filters.FootTrafficCount.HasValue)
                 q = q.Where(t => t.FootTrafficCount >= filters.FootTrafficCount.Value);
-
+            //Filter by traffic counts
             if (filters.VehicleCount.HasValue)
                 q = q.Where(t => t.VehicleCount >= filters.VehicleCount.Value);
-
-            // Date range: prefer From/To; fall back to TimeStampStart/End
-            var from = filters.From ?? filters.TimeStampStart ?? filters.TimeStamp;
-            var to   = filters.To   ?? filters.TimeStampEnd   ?? filters.TimeStamp;
 
             if (from.HasValue)
                 q = q.Where(t => t.Timestamp >= from.Value);
