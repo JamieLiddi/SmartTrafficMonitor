@@ -14,10 +14,16 @@ namespace SmartTrafficMonitor.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Map TrafficData entity to existing "traffictable" table
-            modelBuilder.Entity<TrafficData>().ToTable("traffictable");
-
             base.OnModelCreating(modelBuilder);
-        }
+
+            // Map TrafficData entity to the existing "traffictable" table
+            modelBuilder.Entity<TrafficData>().ToTable("traffictable", "public");
+            modelBuilder.Entity<TrafficData>(entity =>
+        {
+            entity.ToTable("traffictable", "public"); 
+            entity.HasKey(t => t.Id);                 // Id = row primary key
+            entity.Property(t => t.SensorId)
+                .ValueGeneratedNever();          
+        });
     }
 }

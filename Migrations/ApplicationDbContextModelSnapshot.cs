@@ -24,45 +24,61 @@ namespace SmartTrafficMonitor.Migrations
 
             modelBuilder.Entity("SmartTrafficMonitor.Models.TrafficData", b =>
                 {
+                    // Id (PrimaryKey)
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Direction")
-                        .HasColumnType("text");
+                    // sensor_id
+                    b.Property<int>("SensorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("sensor_id");
 
-                    b.Property<int>("FootTrafficCount")
-                        .HasColumnType("integer");
+                    // timestamp
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("timestamp");
 
-                    b.Property<string>("HeatmapPeriod")
-                        .HasColumnType("text");
-
+                    // movement_type
                     b.Property<string>("MovementType")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("movement_type");
 
-                    b.Property<bool>("PublicTransportRef")
-                        .HasColumnType("boolean");
+                    // direction
+                    b.Property<string>("Direction")
+                        .HasColumnType("text")
+                        .HasColumnName("direction");
 
+                    // season
                     b.Property<string>("Season")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("season");
 
-                    b.Property<string>("SensorId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("VUScheduleRef")
-                        .HasColumnType("boolean");
+                    // counts
+                    b.Property<int>("FootTrafficCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("foot_traffic_count");
 
                     b.Property<int>("VehicleCount")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("vehicle_count");
+
+                    // flags
+                    b.Property<bool>("PublicTransportRef")
+                        .HasColumnType("boolean")
+                        .HasColumnName("public_transport_ref");
+
+                    b.Property<bool>("VuScheduleRef")
+                        .HasColumnType("boolean")
+                        .HasColumnName("vu_schedule_ref");
 
                     b.HasKey("Id");
 
-                    b.ToTable("TrafficDatas");
+                    //database table & schema
+                    b.ToTable("traffictable", "public");
                 });
 #pragma warning restore 612, 618
         }
