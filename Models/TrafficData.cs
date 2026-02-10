@@ -55,7 +55,7 @@ namespace SmartTrafficMonitor.Models
         public DateTime? To { get; set; }            // matches Index.cshtml
 
         public string MovementType { get; set; }     // Pedestrian/Vehicle/Cyclist/empty
-        public string Direction { get; set; }        // UI-only (no DB column)
+        public string Direction { get; set; }        //Db column & UI filter
         public string Season { get; set; }           // Summer/Autumn/Winter/Spring/empty
         public bool? PublicTransportRef { get; set; }
         public bool? VUScheduleRef { get; set; }     
@@ -119,6 +119,7 @@ namespace SmartTrafficMonitor.Services
 
                 sb.Append(r.SensorId).Append(',');
                 sb.Append(r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")).Append(',');
+                sb.Append(Esc(r.MovementType)).Append(',');
                 sb.Append(Esc(r.Direction)).Append(',');
                 sb.Append(Esc(r.Season)).Append(',');
                 sb.Append(r.FootTrafficCount).Append(',');
@@ -163,8 +164,8 @@ namespace SmartTrafficMonitor.Services
                 q = q.Where(t => t.MovementType == filters.MovementType);
 
             if (!string.IsNullOrWhiteSpace(filters.Direction))
-            q = q.Where(t => t.Direction == filters.Direction);
-
+            { q = q.Where(t => t.Direction == filters.Direction);
+}
             //Filter by Season
             if (!string.IsNullOrWhiteSpace(filters.Season))
                 q = q.Where(t => t.Season == filters.Season);

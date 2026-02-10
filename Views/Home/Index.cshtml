@@ -1,10 +1,15 @@
 @model SmartTrafficMonitor.Models.DashboardViewModel
+
 @{
     ViewData["Title"] = "Home Page";
 
-    // Pull current values from the querystring (safe even if missing)
-    string q(string name) => Context.Request.Query[name].ToString();
-    ? Context.Request.Query[name].ToString() : ""; // default to empty string if not present
+    string q(string key)
+    {
+        return Context.Request.Query.ContainsKey(key)
+            ? Context.Request.Query[key].ToString()
+            : "";
+    }
+
     var qSensorId = q("SensorId");
     var qFrom = q("From");
     var qTo = q("To");
@@ -14,6 +19,7 @@
     var qPt = q("PublicTransportRef");
     var qVu = q("VUScheduleRef");
 }
+
 
 <div class="container mt-4">
     <!-- FILTERS -> reload Index with results -->

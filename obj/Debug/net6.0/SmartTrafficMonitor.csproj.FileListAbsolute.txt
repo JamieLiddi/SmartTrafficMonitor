@@ -54,8 +54,10 @@ C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\ne
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.runtimeconfig.json
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\SmartTrafficMonitor.pdb
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Humanizer.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Npgsql.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
@@ -78,7 +80,6 @@ C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\ne
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets\msbuild.buildMultiTargeting.SmartTrafficMonitor.props
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets\msbuild.buildTransitive.SmartTrafficMonitor.props
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.pack.json
-C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\staticwebassets.upToDateCheck.txt
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\SmartTra.5090A476.Up2Date
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.dll
 C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\obj\Debug\net6.0\refint\SmartTrafficMonitor.dll

@@ -14,16 +14,17 @@ namespace SmartTrafficMonitor.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //Always call base first so EF conventions are applied
             base.OnModelCreating(modelBuilder);
 
-            // Map TrafficData entity to the existing "traffictable" table
+            //Map TrafficData entity to existing "traffictable" table + schema
             modelBuilder.Entity<TrafficData>().ToTable("traffictable", "public");
-            modelBuilder.Entity<TrafficData>(entity =>
-        {
-            entity.ToTable("traffictable", "public"); 
-            entity.HasKey(t => t.Id);                 // Id = row primary key
-            entity.Property(t => t.SensorId)
-                .ValueGeneratedNever();          
-        });
+            modelBuilder.Entity<TrafficData>().HasKey(t => t.Id); // Id = Primary Key
+
+            //SensorId is NOT auto-generated (it’s a sensor identifier)
+            modelBuilder.Entity<TrafficData>()
+                .Property(t => t.SensorId)
+                .ValueGeneratedNever();
+        }
     }
 }
