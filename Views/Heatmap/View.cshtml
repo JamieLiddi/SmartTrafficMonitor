@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Heatmap";
+    var zone = (ViewData["Zone"]?.ToString() ?? "Unknown Zone");
+    var period = (ViewData["Period"]?.ToString() ?? "Unknown Period");
+}
+
+<div class="container" style="max-width: 980px; margin-top: 20px;">
+    <h3 style="margin-top:0;">Heatmap Preview</h3>
+    <p class="text-muted" style="margin-bottom: 15px;">
+        Zone: <strong>@zone</strong> | Period: <strong>@period</strong>
+    </p>
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <p style="margin-bottom: 10px;">
+                Heatmap rendering is not implemented yet. This IS A TEMP PAGE to show where the heatmap will be displayed once implemented.
+            </p>
+
+            <div style="border: 1px dashed #aaa; height: 360px; display:flex; align-items:center; justify-content:center;">
+                <span class="text-muted">[Heatmap canvas will render here]</span>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,17 +1,68 @@
 ﻿@{
     ViewData["Title"] = "Contact";
 }
-<h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
 
-<address>
-    One Microsoft Way<br />
-    Redmond, WA 98052-6399<br />
-    <abbr title="Phone">P:</abbr>
-    425.555.0100
-</address>
+<div class="container" style="max-width: 980px;">
+    <div class="mt-4 mb-4">
+        <h1 class="display-4" style="font-weight: 600;">Contact</h1>
+        <p class="lead mb-0">
+            Get in touch about data access, reporting, stakeholder requirements, or technical support.
+        </p>
+    </div>
 
-<address>
-    <strong>Support:</strong> <a href="mailto:Support@example.com">Support@example.com</a><br />
-    <strong>Marketing:</strong> <a href="mailto:Marketing@example.com">Marketing@example.com</a>
-</address>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-7 mb-4">
+            <h3 style="font-weight: 600;">Project Enquiries</h3>
+            <p>
+                For stakeholder questions (council/business/transport planning use cases), reporting requests,
+                or feature requirements, contact the project team.
+            </p>
+
+            <div class="card">
+                <div class="card-body">
+                    <p class="mb-2"><strong>Team:</strong> SmartTrafficMonitor Project Group</p>
+                    <p class="mb-2"><strong>Location:</strong> Footscray, Melbourne (Victoria University corridor)</p>
+
+                    <p class="mb-0 text-muted" style="font-size: 0.95rem;">
+                        Note: Replace the emails below with your real team addresses before submission.
+                    </p>
+                    <hr />
+                    <p class="mb-2">
+                        <strong>General:</strong>
+                        <a href="mailto:smarttrafficmonitor.team@vu.example">smarttrafficmonitor.team@vu.example</a>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Technical:</strong>
+                        <a href="mailto:smarttrafficmonitor.support@vu.example">smarttrafficmonitor.support@vu.example</a>
+                    </p>
+                    <p class="mb-0">
+                        <strong>Data/Reports:</strong>
+                        <a href="mailto:smarttrafficmonitor.reports@vu.example">smarttrafficmonitor.reports@vu.example</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 mb-4">
+            <h3 style="font-weight: 600;">Support Hours</h3>
+            <ul class="list-unstyled">
+                <li><strong>Mon–Fri:</strong> 9:00am – 5:00pm</li>
+                <li><strong>Weekends:</strong> By appointment</li>
+            </ul>
+
+            <h3 style="font-weight: 600;" class="mt-4">Privacy & Security</h3>
+            <p class="mb-0">
+                Requests involving datasets or exports may require approval depending on role access.
+                The platform is designed to support secure handling of traffic data with retention practices
+                aligned to privacy expectations.
+            </p>
+        </div>
+    </div>
+
+    <div class="alert alert-secondary" role="alert">
+        <strong>Tip for submission:</strong> Add your real stakeholder contact details + GitHub repo link here,
+        and include a “How to request a report” one-liner.
+    </div>
+</div>

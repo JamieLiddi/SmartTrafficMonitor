@@ -1,254 +1,271 @@
 @model SmartTrafficMonitor.Models.DashboardViewModel
+@using SmartTrafficMonitor.Models
 
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 
-    string q(string key)
+    var f = Model?.Filters ?? new TrafficFilterModel();
+
+    string fmtDate(DateTime? dt)
     {
-        return Context.Request.Query.ContainsKey(key)
-            ? Context.Request.Query[key].ToString()
-            : "";
+        // datetime-local expects: yyyy-MM-ddTHH:mm
+        return dt.HasValue ? dt.Value.ToString("yyyy-MM-ddTHH:mm") : "";
     }
 
-    var qSensorId = q("SensorId");
-    var qFrom = q("From");
-    var qTo = q("To");
-    var qMovementType = q("MovementType");
-    var qDirection = q("Direction");
-    var qSeason = q("Season");
-    var qPt = q("PublicTransportRef");
-    var qVu = q("VUScheduleRef");
-}
+    bool hasAnyQueryFilters = Context.Request.Query != null && Context.Request.Query.Count > 0;
 
+    string boolToString(bool? v)
+    {
+        if (!v.HasValue) return "";
+        return v.Value ? "true" : "false";
+    }
+}
 
 <div class="container mt-4">
-    <!-- FILTERS -> reload Index with results -->
-    <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
-        <!-- FIRST ROW -->
-        <div class="row g-4">
-            <div class="col-md-3">
-                <label for="SensorId">Sensor ID:</label>
-                <input type="number" id="SensorId" name="SensorId" class="form-control" value="@qSensorId" />
-            </div>
 
-            <div class="col-md-3">
-                <label for="From">Start Time:</label>
-                <input type="datetime-local" id="From" name="From" class="form-control" value="@qFrom" />
-            </div>
-
-            <div class="col-md-3">
-                <label for="To">End Time:</label>
-                <input type="datetime-local" id="To" name="To" class="form-control" value="@qTo" />
-            </div>
-
-            <div class="col-md-3">
-                <label for="MovementType">Movement Type:</label>
-                <select id="MovementType" name="MovementType" class="form-control">
-                    <option value="">(Any)</option>
-                    <option value="Pedestrian" selected="@(qMovementType=="Pedestrian" ? "selected" : null)">Pedestrian</option>
-                    <option value="Vehicle"    selected="@(qMovementType=="Vehicle"    ? "selected" : null)">Vehicle</option>
-                    <option value="Cyclist"    selected="@(qMovementType=="Cyclist"    ? "selected" : null)">Cyclist</option>
-                </select>
-            </div>
-        </div>
-<!-- DIRECTION -->
-<div class="row g-4 mt-2">
-    <div class="col-md-3">
-        <label for="Direction">Direction:</label>
-        <select id="Direction" name="Direction" class="form-control">
-            <option value="">(Any)</option>
-            <option value="N" selected="@(qDirection=="N" ? "selected" : null)">North</option>
-            <option value="S" selected="@(qDirection=="S" ? "selected" : null)">South</option>
-            <option value="E" selected="@(qDirection=="E" ? "selected" : null)">East</option>
-            <option value="W" selected="@(qDirection=="W" ? "selected" : null)">West</option>
-        </select>
+    <div class="mb-3">
+        <h3 style="margin-top:0;">SmartTrafficMonitor Dashboard</h3>
+        <p class="text-muted" style="margin-bottom:0;">
+            Filter traffic data, export reports, and preview heatmap output.
+        </p>
     </div>
-</div>
 
-        <!-- FILTER ROW (Season & refs) -->
-        <div class="row g-4 mt-2">
+    <!-- FILTERS -->
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Filters</strong></div>
+        <div class="panel-body">
+            <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <label for="SensorId">Sensor ID</label>
+                        <input type="number" id="SensorId" name="SensorId" class="form-control" value="@(f.SensorId?.ToString() ?? "")" />
+                    </div>
 
-            <div class="col-md-3">
-                <label for="Season">Season:</label>
-                <select id="Season" name="Season" class="form-control">
-                    <option value="">(Any)</option>
-                    <option value="Summer" selected="@(qSeason=="Summer" ? "selected" : null)">Summer</option>
-                    <option value="Autumn" selected="@(qSeason=="Autumn" ? "selected" : null)">Autumn</option>
-                    <option value="Winter" selected="@(qSeason=="Winter" ? "selected" : null)">Winter</option>
-                    <option value="Spring" selected="@(qSeason=="Spring" ? "selected" : null)">Spring</option>
-                </select>
-            </div>
+                    <div class="col-md-3">
+                        <label for="From">Start Time</label>
+                        <input type="datetime-local" id="From" name="From" class="form-control" value="@fmtDate(f.From)" />
+                    </div>
 
-            <div class="col-md-3">
-                <label for="PublicTransportRef">Transport Nearby:</label>
-                <select id="PublicTransportRef" name="PublicTransportRef" class="form-control">
-                    <option value="">(Any)</option>
-                    <option value="true"  selected="@(qPt=="true"  ? "selected" : null)">Yes</option>
-                    <option value="false" selected="@(qPt=="false" ? "selected" : null)">No</option>
-                </select>
-            </div>
+                    <div class="col-md-3">
+                        <label for="To">End Time</label>
+                        <input type="datetime-local" id="To" name="To" class="form-control" value="@fmtDate(f.To)" />
+                    </div>
 
-            <div class="col-md-3">
-                <label for="VUScheduleRef">Near VU Schedule:</label>
-                <select id="VUScheduleRef" name="VUScheduleRef" class="form-control">
-                    <option value="">(Any)</option>
-                    <option value="true"  selected="@(qVu=="true"  ? "selected" : null)">Yes</option>
-                    <option value="false" selected="@(qVu=="false" ? "selected" : null)">No</option>
-                </select>
-            </div>
+                    <div class="col-md-3">
+                        <label for="MovementType">Movement Type</label>
+                        <select id="MovementType" name="MovementType" class="form-control">
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.MovementType) ? "selected" : null)">(Any)</option>
+                            <option value="Pedestrian" selected="@(f.MovementType=="Pedestrian" ? "selected" : null)">Pedestrian</option>
+                            <option value="Vehicle" selected="@(f.MovementType=="Vehicle" ? "selected" : null)">Vehicle</option>
+                            <option value="Cyclist" selected="@(f.MovementType=="Cyclist" ? "selected" : null)">Cyclist</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <label for="Direction">Direction</label>
+                        <select id="Direction" name="Direction" class="form-control">
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Direction) ? "selected" : null)">(Any)</option>
+
+                            <!-- IMPORTANT: values are words to match DB values (e.g., "South") -->
+                            <option value="North" selected="@(f.Direction=="North" ? "selected" : null)">North</option>
+                            <option value="South" selected="@(f.Direction=="South" ? "selected" : null)">South</option>
+                            <option value="East" selected="@(f.Direction=="East" ? "selected" : null)">East</option>
+                            <option value="West" selected="@(f.Direction=="West" ? "selected" : null)">West</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="Season">Season</label>
+                        <select id="Season" name="Season" class="form-control">
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Season) ? "selected" : null)">(Any)</option>
+                            <option value="Summer" selected="@(f.Season=="Summer" ? "selected" : null)">Summer</option>
+                            <option value="Autumn" selected="@(f.Season=="Autumn" ? "selected" : null)">Autumn</option>
+                            <option value="Winter" selected="@(f.Season=="Winter" ? "selected" : null)">Winter</option>
+                            <option value="Spring" selected="@(f.Season=="Spring" ? "selected" : null)">Spring</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="PublicTransportRef">Transport Nearby</label>
+                        <select id="PublicTransportRef" name="PublicTransportRef" class="form-control">
+                            <option value="" selected="@(f.PublicTransportRef == null ? "selected" : null)">(Any)</option>
+                            <option value="true" selected="@(f.PublicTransportRef == true ? "selected" : null)">Yes</option>
+                            <option value="false" selected="@(f.PublicTransportRef == false ? "selected" : null)">No</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="VUScheduleRef">Near VU Schedule</label>
+                        <select id="VUScheduleRef" name="VUScheduleRef" class="form-control">
+                            <option value="" selected="@(f.VUScheduleRef == null ? "selected" : null)">(Any)</option>
+                            <option value="true" selected="@(f.VUScheduleRef == true ? "selected" : null)">Yes</option>
+                            <option value="false" selected="@(f.VUScheduleRef == false ? "selected" : null)">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Apply Filters</button>
+                    </div>
+                    <div class="col-md-10 text-muted" style="padding-top: 8px;">
+                        @if (Model?.Results != null)
+                        {
+                            <span>Results: <strong>@Model.Results.Count</strong></span>
+                        }
+                    </div>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <!-- BUTTON ROW -->
-        <div class="row g-3 mt-3">
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-            </div>
+    <!-- EXPORT -->
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Export</strong></div>
+        <div class="panel-body">
+            <form id="exportForm" method="get" action="/api/export">
+                <!-- carry filters -->
+                <input type="hidden" name="SensorId" value="@(f.SensorId?.ToString() ?? "")" />
+                <input type="hidden" name="From" value="@fmtDate(f.From)" />
+                <input type="hidden" name="To" value="@fmtDate(f.To)" />
+                <input type="hidden" name="MovementType" value="@(f.MovementType ?? "")" />
+                <input type="hidden" name="Direction" value="@(f.Direction ?? "")" />
+                <input type="hidden" name="Season" value="@(f.Season ?? "")" />
+                <input type="hidden" name="PublicTransportRef" value="@boolToString(f.PublicTransportRef)" />
+                <input type="hidden" name="VUScheduleRef" value="@boolToString(f.VUScheduleRef)" />
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="ExportFormat">Export Format</label>
+                        <select id="ExportFormat" name="ExportFormat" class="form-control">
+                            <option value="csv">CSV</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" style="padding-top: 24px;">
+                        <button type="submit" class="btn btn-default" style="width:100%;">Export Report</button>
+                    </div>
+                </div>
+            </form>
         </div>
-    </form>
-
-    <!-- EXPORT (reuses current filters) -->
-    <form id="exportForm" class="form-inline mt-3" method="get" action="/api/export">
-        <!-- Hidden fields copied from filterForm on submit -->
-        <input type="hidden" name="SensorId" />
-        <input type="hidden" name="From" />
-        <input type="hidden" name="To" />
-        <input type="hidden" name="MovementType" />
-        <input type="hidden" name="Direction" />
-        <input type="hidden" name="Season" />
-        <input type="hidden" name="PublicTransportRef" />
-        <input type="hidden" name="VUScheduleRef" />
-
-        <!-- Choosing EXPORT format -->
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label for="ExportFormat">Export Format</label>
-                <select id="ExportFormat" name="ExportFormat" class="form-control w-100">
-                    <option value="csv">CSV</option>
-                    <option value="pdf">PDF</option>
-                </select>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-outline-secondary w-100">Export Report</button>
-            </div>
-        </div>
-    </form>
+    </div>
 
     <!-- HEATMAP -->
-    <form id="heatmapForm" class="form-inline mt-5">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label for="HeatmapZone">Select Zone:</label>
-                <select id="HeatmapZone" class="form-control">
-                    <option value="Footscray Park">Footscray Park</option>
-                    <option value="VU Campus">VU Campus</option>
-                </select>
-            </div>
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Heatmap</strong></div>
+        <div class="panel-body">
+            <form id="heatmapForm">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="HeatmapZone">Select Zone</label>
+                        <select id="HeatmapZone" class="form-control">
+                            <option value="Footscray Park">Footscray Park</option>
+                            <option value="VU Campus">VU Campus</option>
+                        </select>
+                    </div>
 
-            <div class="col-md-4">
-                <label for="HeatmapPeriod">Select Time Period:</label>
-                <select id="HeatmapPeriod" class="form-control">
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Seasonal">Seasonal</option>
-                </select>
-            </div>
+                    <div class="col-md-4">
+                        <label for="HeatmapPeriod">Select Time Period</label>
+                        <select id="HeatmapPeriod" class="form-control">
+                            <option value="Weekly">Weekly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Seasonal">Seasonal</option>
+                        </select>
+                    </div>
 
-            <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-warning w-100">Generate Heatmap</button>
+                    <div class="col-md-4" style="padding-top: 24px;">
+                        <button type="submit" class="btn btn-warning" style="width:100%;">Generate Heatmap</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="mt-4" style="margin-top:15px;">
+                <h4 style="margin-top:0;">Heatmap Preview</h4>
+                <iframe id="heatmapFrame" src="/Heatmap/View?zone=Footscray%20Park&period=Weekly" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
             </div>
         </div>
-    </form>
-
-    <!-- HEATMAP PREVIEW -->
-    <div class="mt-4">
-        <h4>Heatmap Preview</h4>
-        <iframe id="heatmapFrame" src="" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
     </div>
 
-<!-- RESULTS TABLE -->
-@if (Model?.Results != null && Model.Results.Count > 0)
-{
-    <div class="mt-4">
-        <h4>Filtered Results</h4>
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Sensor ID</th>
-                    <th>Timestamp</th>
-                    <th>Movement</th>
-                    <th>Direction</th>
-                    <th>Season</th>
-                    <th>Foot Traffic</th>
-                    <th>Vehicles</th>
-                    <th>Transport Nearby</th>
-                    <th>Near VU</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var r in Model.Results)
+    <!-- RESULTS TABLE -->
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Results</strong></div>
+        <div class="panel-body">
+            @if (Model?.Results != null && Model.Results.Count > 0)
+            {
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Sensor ID</th>
+                            <th>Timestamp</th>
+                            <th>Movement</th>
+                            <th>Direction</th>
+                            <th>Season</th>
+                            <th>Foot Traffic</th>
+                            <th>Vehicles</th>
+                            <th>Transport Nearby</th>
+                            <th>Near VU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Results)
+                        {
+                            <tr>
+                                <td>@r.SensorId</td>
+                                <td>@r.Timestamp</td>
+                                <td>@r.MovementType</td>
+                                <td>@r.Direction</td>
+                                <td>@r.Season</td>
+                                <td>@r.FootTrafficCount</td>
+                                <td>@r.VehicleCount</td>
+                                <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
+                                <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                if (hasAnyQueryFilters)
                 {
-                    <tr>
-                        <td>@r.SensorId</td>
-                        <td>@r.Timestamp</td>
-                        <td>@r.MovementType</td>
-                        <td>@r.Direction</td>
-                        <td>@r.Season</td>
-                        <td>@r.FootTrafficCount</td>
-                        <td>@r.VehicleCount</td>
-                        <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
-                        <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
-                    </tr>
+                    <p>No data found for the selected filters.</p>
                 }
-            </tbody>
-        </table>
+                else
+                {
+                    <p class="text-muted">Apply filters to view results.</p>
+                }
+            }
+        </div>
     </div>
-}
-else
-{
-    <div class="mt-4">
-        <p>No data found for the selected filters.</p>
-    </div>
-}
 
-    <div class="summary-box mt-4">
-        <h4>SUMMARY</h4>
-        <p>
-            This dashboard helps visualize traffic patterns across Footscray using Smart Sensors. You can filter data, generate heatmaps, and export reports.
-        </p>
-        <ul>
-            <li>Real-time and historical traffic insights</li>
-            <li>Interactive heatmap visualization</li>
-            <li>Export reports in CSV or PDF format</li>
-            <li>Zone-based and seasonal traffic analysis</li>
-        </ul>
+    <div class="panel panel-default">
+        <div class="panel-heading"><strong>Summary</strong></div>
+        <div class="panel-body">
+            <p>
+                This dashboard helps visualise traffic patterns across Footscray using smart sensor data.
+                Filter data, generate heatmaps, and export reports for stakeholder use.
+            </p>
+            <ul>
+                <li>Real-time and historical traffic insights</li>
+                <li>Heatmap preview output (placeholder until implemented)</li>
+                <li>Export reports in CSV or PDF format</li>
+                <li>Zone-based and seasonal traffic analysis</li>
+            </ul>
+        </div>
     </div>
 </div>
-
 
 @section Scripts {
 <script>
-    // Copy current filter values to export form on submit
-    document.getElementById('exportForm').addEventListener('submit', function (e) {
-    const src = document.getElementById('filterForm');
-    const dst = e.target;
-
-    const fields = ["SensorId","From","To","MovementType","Direction","Season","PublicTransportRef","VUScheduleRef"];
-    fields.forEach(name => {
-        const srcEl = src.querySelector(`[name="${name}"]`);
-        const dstEl = dst.querySelector(`[name="${name}"]`);
-
-       // Only copy if both source and destination elements exist
-        if (srcEl && dstEl) dstEl.value = srcEl.value || "";
-    });
-});
-
-    // Load heatmap in iframe based on form selections
+    // Load heatmap preview in iframe
     document.getElementById('heatmapForm').addEventListener('submit', function (e) {
         e.preventDefault();
-        var Zone = document.getElementById('HeatmapZone').value;
-        var HeatmapPeriod = document.getElementById('HeatmapPeriod').value;
-        var params = new URLSearchParams({ Zone, HeatmapPeriod }).toString();
-        document.getElementById('heatmapFrame').src = `/api/heatmap?${params}`;
+        var zone = document.getElementById('HeatmapZone').value;
+        var period = document.getElementById('HeatmapPeriod').value;
+        var params = new URLSearchParams({ zone: zone, period: period }).toString();
+        document.getElementById('heatmapFrame').src = '/Heatmap/View?' + params;
     });
 </script>
 }
