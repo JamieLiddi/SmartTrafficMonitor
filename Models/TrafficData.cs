@@ -24,14 +24,14 @@ namespace SmartTrafficMonitor.Models
         public DateTime Timestamp { get; set; }
 
         [Column("MovementType")]
-        public string MovementType { get; set; }
+        public string? MovementType { get; set; }
 
         // Direction of movement 
         [Column("Direction")]
-        public string Direction { get; set; }
+        public string? Direction { get; set; }
 
         [Column("Season")]
-        public string Season { get; set; }
+        public string? Season { get; set; }
 
         [Column("FootTrafficCount")]
         public int FootTrafficCount { get; set; }
