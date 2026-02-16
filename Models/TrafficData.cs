@@ -12,37 +12,37 @@ namespace SmartTrafficMonitor.Models
     {
         //Primary Key Row
         [Key]
-        [Column("id")]
+        [Column("Id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         // Sensor Location Identifier  
-        [Column("sensor_id")]
+        [Column("SensorId")]
         public int SensorId { get; set; }
 
-        [Column("timestamp")]
+        [Column("TimeStamp")]
         public DateTime Timestamp { get; set; }
 
-        [Column("movement_type")]
+        [Column("MovementType")]
         public string MovementType { get; set; }
 
         // Direction of movement 
-        [Column("direction")]
+        [Column("Direction")]
         public string Direction { get; set; }
 
-        [Column("season")]
+        [Column("Season")]
         public string Season { get; set; }
 
-        [Column("foot_traffic_count")]
+        [Column("FootTrafficCount")]
         public int FootTrafficCount { get; set; }
 
-        [Column("vehicle_count")]
+        [Column("VehicleCount")]
         public int VehicleCount { get; set; }
 
-        [Column("public_transport_ref")]
+        [Column("PublicTransportRef")]
         public bool PublicTransportRef { get; set; }
 
-        [Column("vu_schedule_ref")]
+        [Column("VUScheduleRef")]
         public bool VuScheduleRef { get; set; }
     }
 
