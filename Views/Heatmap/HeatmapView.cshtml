@@ -1,3 +1,69 @@
-﻿@*Views/Heatmap/HeatmapView.cshtml*@
+﻿@* Views/Heatmap/HeatmapView.cshtml *@
+@{
+    Layout = null;
+    var zone = (string)(ViewData["Zone"] ?? "Unknown Zone");
+    var period = (string)(ViewData["Period"] ?? "Unknown Period");
+    var centerLat = (double)(ViewData["CenterLat"] ?? -37.7985);
+    var centerLng = (double)(ViewData["CenterLng"] ?? 144.9015);
+    var pointsJson = (string)(ViewData["HeatPointsJson"] ?? "[]");
+}
 
-<h2>Heatmap Loaded</h2>
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Heatmap</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body { height: 100%; margin: 0; }
+        #map { height: 100vh; width: 100%; }
+        .topbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 999;
+            background: rgba(255,255,255,0.95);
+            padding: 10px 12px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+        .topbar strong { display:block; font-size: 14px; }
+        .muted { color:#666; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <strong>Heatmap Preview</strong>
+        <div class="muted">@zone • @period</div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <script>
+        const centerLat = @centerLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const centerLng = @centerLng.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const heatPoints = @Html.Raw(pointsJson);
+
+        const map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+
+        const heat = L.heatLayer(heatPoints, {
+            radius: 30,
+            blur: 22,
+            maxZoom: 17
+        }).addTo(map);
+    </script>
+</body>
+</html>

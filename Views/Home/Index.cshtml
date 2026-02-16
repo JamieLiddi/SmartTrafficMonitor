@@ -35,6 +35,7 @@
         <div class="panel-heading"><strong>Filters</strong></div>
         <div class="panel-body">
             <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
+            <input type="hidden" name="Page" value="1" />
                 <div class="row" style="margin-bottom: 15px;">
                     <div class="col-md-3">
                         <label for="SensorId">Sensor ID</label>
@@ -107,7 +108,15 @@
                         </select>
                     </div>
                 </div>
-
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <label for="PageSize">Rows per page</label>
+                        <select id="PageSize" name="PageSize" class="form-control">
+                            <option value="50" selected="@(f.PageSize == 50 ? "selected" : null)">50</option>
+                            <option value="100" selected="@(f.PageSize == 100 ? "selected" : null)">100</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary" style="width:100%;">Apply Filters</button>
@@ -227,6 +236,64 @@
                         }
                     </tbody>
                 </table>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px;">
+    <div class="text-muted">
+        Showing page <strong>@Model.Page</strong> of <strong>@Model.TotalPages</strong>
+        — Total rows: <strong>@Model.TotalCount</strong>
+    </div>
+
+    <nav aria-label="Results pagination">
+        <ul class="pagination" style="margin:0;">
+            @{
+    var prevDisabled = Model.Page <= 1 ? "disabled" : "";
+    var nextDisabled = Model.Page >= Model.TotalPages ? "disabled" : "";
+}
+
+            }
+
+            <li class="page-item @prevDisabled">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-controller="Home"
+                   asp-route-Page="@(Model.Page - 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   asp-route-SensorId="@f.SensorId"
+                   asp-route-From="@f.From"
+                   asp-route-To="@f.To"
+                   asp-route-MovementType="@f.MovementType"
+                   asp-route-Direction="@f.Direction"
+                   asp-route-Season="@f.Season"
+                   asp-route-PublicTransportRef="@f.PublicTransportRef"
+                   asp-route-VUScheduleRef="@f.VUScheduleRef"
+                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                   asp-route-VehicleCount="@f.VehicleCount">
+                    Prev
+                </a>
+            </li>
+
+            <li class="page-item @nextDisabled">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-controller="Home"
+                   asp-route-Page="@(Model.Page + 1)"
+                   asp-route-PageSize="@Model.PageSize"
+                   asp-route-SensorId="@f.SensorId"
+                   asp-route-From="@f.From"
+                   asp-route-To="@f.To"
+                   asp-route-MovementType="@f.MovementType"
+                   asp-route-Direction="@f.Direction"
+                   asp-route-Season="@f.Season"
+                   asp-route-PublicTransportRef="@f.PublicTransportRef"
+                   asp-route-VUScheduleRef="@f.VUScheduleRef"
+                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                   asp-route-VehicleCount="@f.VehicleCount">
+                    Next
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
             }
             else
             {

@@ -4,13 +4,13 @@
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"12sylfdn9r"},{"Name":"integrity","Value":"sha256-iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY="},{"Name":"label","Value":"_content/SmartTrafficMonitor/css/site.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:12 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:55 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:12 GMT"}]]]></ResponseHeaders>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:55 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.min.8qo50a92ce.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.min.css'))</AssetFile>
