@@ -32,8 +32,11 @@ namespace SmartTrafficMonitor.Controllers
             }
             catch (Exception ex)
             {
+                //_logger.LogError(ex, "Error retrieving filtered data for dashboard");
+                //results = new List<TrafficData>(); // Fallback empty list on error
+
                 _logger.LogError(ex, "Error retrieving filtered data for dashboard");
-                results = new List<TrafficData>(); // Fallback empty list on error
+                throw; // <- TEMPORARY: lets you see the real error in browser
 
             }
             var vm = new DashboardViewModel
