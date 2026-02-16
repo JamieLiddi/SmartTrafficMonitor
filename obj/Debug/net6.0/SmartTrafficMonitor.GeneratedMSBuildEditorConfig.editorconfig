@@ -24,15 +24,11 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSGVhdG1hcFxIZWF0bWFwVmlldy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-<<<<<<< HEAD
-[C:/Capstone Project/SmartTrafficMonitor/Views/Home/About.cshtml]
-=======
-[C:/Users/jjlid/source/repos/SmartTrafficMonitor/SmartTrafficMonitor/Views/Heatmap/View.cshtml]
+[C:/Capstone Project/SmartTrafficMonitor/Views/Heatmap/View.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSGVhdG1hcFxWaWV3LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/jjlid/source/repos/SmartTrafficMonitor/SmartTrafficMonitor/Views/Home/About.cshtml]
->>>>>>> 8979af09e0b1ac832a9bd3eb34d02eadcf96b6c2
+[C:/Capstone Project/SmartTrafficMonitor/Views/Home/About.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxBYm91dC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
