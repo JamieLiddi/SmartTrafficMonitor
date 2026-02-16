@@ -1,7 +1,78 @@
 ﻿@{
     ViewData["Title"] = "About";
 }
-<h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
 
-<p>Use this area to provide additional information.</p>
+<div class="container" style="max-width: 980px;">
+    <div class="mt-4 mb-4">
+        <h1 class="display-4" style="font-weight: 600;">Smart Foot Traffic Monitor System</h1>
+        <p class="lead mb-0">
+            A monitoring and analytics dashboard for understanding pedestrian, cyclist, and vehicle movement patterns
+            in the Footscray CBD to Victoria University corridor.
+        </p>
+    </div>
+
+    <hr />
+
+    <section class="mb-4">
+        <h3 style="font-weight: 600;">Purpose</h3>
+        <p>
+            This system supports evidence-based decision making for councils, transport planners, and local businesses by
+            transforming real-time and historical sensor data into clear visual insights and exportable reports.
+        </p>
+    </section>
+
+    <section class="mb-4">
+        <h3 style="font-weight: 600;">Key Capabilities</h3>
+        <ul>
+            <li><strong>Interactive heatmaps</strong> (zone-based visualisation of movement intensity).</li>
+            <li><strong>Filtering</strong> by time/date range, zone, movement type, direction, season, and contextual proxies (e.g., weather/transport proximity).</li>
+            <li><strong>Correlation insights</strong> with public transport timing and VU schedule patterns.</li>
+            <li><strong>Exporting</strong> filtered datasets and reports (CSV/PDF).</li>
+        </ul>
+    </section>
+
+    <section class="mb-4">
+        <h3 style="font-weight: 600;">Stakeholders</h3>
+        <ul>
+            <li><strong>Local councils:</strong> planning, safety, and infrastructure investment.</li>
+            <li><strong>Transport providers:</strong> service planning and peak demand analysis.</li>
+            <li><strong>Victoria University:</strong> campus access patterns and scheduling insights.</li>
+            <li><strong>Local businesses:</strong> foot traffic trends and trading period optimisation.</li>
+        </ul>
+    </section>
+
+    <section class="mb-4">
+        <h3 style="font-weight: 600;">Non-Functional Requirements</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <ul>
+                    <li><strong>Performance:</strong> UI responses targeted under 3 seconds.</li>
+                    <li><strong>Update cycle:</strong> new data processed roughly every 15 minutes.</li>
+                    <li><strong>Scalability:</strong> designed to handle at least 10× data growth.</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul>
+                    <li><strong>Security:</strong> TLS in transit and encrypted storage where applicable.</li>
+                    <li><strong>Access control:</strong> role-based access with optional 2FA support.</li>
+                    <li><strong>Accessibility:</strong> WCAG-aligned UI practices (labels, contrast, keyboard use).</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <h3 style="font-weight: 600;">High-Level Architecture</h3>
+        <ol>
+            <li><strong>Ingestion:</strong> sensor feeds and CSV imports (historical datasets).</li>
+            <li><strong>Processing:</strong> validation + cleaning + aggregation (time buckets / zones).</li>
+            <li><strong>Storage:</strong> structured database for fast filtering and reporting.</li>
+            <li><strong>Visualisation:</strong> heatmaps + charts + export generation.</li>
+        </ol>
+
+        <div class="alert alert-info" role="alert">
+            <strong>USP:</strong> Hyper-local, easy-to-read visual insights with contextual signals (seasonal patterns,
+            transport proximity, and VU schedule alignment).
+        </div>
+    </section>
+</div>

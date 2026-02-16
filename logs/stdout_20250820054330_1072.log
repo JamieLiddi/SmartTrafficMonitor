@@ -1,0 +1,128 @@
+info: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[63]
+      User profile is available. Using 'C:\Users\jjlid\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/ - -
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[3]
+      Route matched with {action = "Index", controller = "Home"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index(SmartTrafficMonitor.Models.TrafficFilterModel) on controller SmartTrafficMonitor.Controllers.HomeController (SmartTrafficMonitor).
+info: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 6.0.0 initialized 'ApplicationDbContext' using provider 'Npgsql.EntityFrameworkCore.PostgreSQL:6.0.0+025fc55189ae41e3f2b98bcbe4eb44c505653700' with options: None
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (409ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT t.sensor_id, t.foot_traffic_count, t.movement_type, t.public_transport_ref, t.season, t.timestamp, t.vehicle_count, t.vu_schedule_ref
+      FROM traffictable AS t
+      ORDER BY t.timestamp DESC
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[1]
+      Executing ViewResult, running view Index.
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[4]
+      Executed ViewResult - view Index executed in 225.671ms.
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[2]
+      Executed action SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor) in 8335.8773ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/ - - - 200 - text/html;+charset=utf-8 8562.9706ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_vs/browserLink - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - - - 200 12370 application/javascript;+charset=utf-8 6.4354ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_vs/browserLink - - - 200 - text/javascript;+charset=UTF-8 76.9924ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/?SensorId=&From=&To=&MovementType=&Season=&PublicTransportRef=&VUScheduleRef= - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[3]
+      Route matched with {action = "Index", controller = "Home"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index(SmartTrafficMonitor.Models.TrafficFilterModel) on controller SmartTrafficMonitor.Controllers.HomeController (SmartTrafficMonitor).
+info: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 6.0.0 initialized 'ApplicationDbContext' using provider 'Npgsql.EntityFrameworkCore.PostgreSQL:6.0.0+025fc55189ae41e3f2b98bcbe4eb44c505653700' with options: None
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (378ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT t.sensor_id, t.foot_traffic_count, t.movement_type, t.public_transport_ref, t.season, t.timestamp, t.vehicle_count, t.vu_schedule_ref
+      FROM traffictable AS t
+      ORDER BY t.timestamp DESC
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[1]
+      Executing ViewResult, running view Index.
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[4]
+      Executed ViewResult - view Index executed in 9.0129ms.
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[2]
+      Executed action SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor) in 7349.5324ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/?SensorId=&From=&To=&MovementType=&Season=&PublicTransportRef=&VUScheduleRef= - - - 200 - text/html;+charset=utf-8 7355.2035ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_vs/browserLink - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - - - 200 12370 application/javascript;+charset=utf-8 1.2039ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_vs/browserLink - - - 200 - text/javascript;+charset=UTF-8 9.8423ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/api/heatmap?Zone=Footscray+Park&HeatmapPeriod=Weekly - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[3]
+      Route matched with {action = "GetHeatmap", controller = "Heatmap"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetHeatmap(SmartTrafficMonitor.Models.TrafficFilterModel) on controller SmartTrafficMonitor.Controllers.HeatmapController (SmartTrafficMonitor).
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ObjectResultExecutor[1]
+      Executing BadRequestObjectResult, writing value of type 'Microsoft.AspNetCore.Mvc.ValidationProblemDetails'.
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[2]
+      Executed action SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor) in 26.6694ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/api/heatmap?Zone=Footscray+Park&HeatmapPeriod=Weekly - - - 400 - application/problem+json;+charset=utf-8 41.9980ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/?SensorId=1&From=2025-08-20T15%3A39&To=2025-08-20T15%3A44&MovementType=Vehicle&Season=Autumn&PublicTransportRef=false&VUScheduleRef=true - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[3]
+      Route matched with {action = "Index", controller = "Home"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index(SmartTrafficMonitor.Models.TrafficFilterModel) on controller SmartTrafficMonitor.Controllers.HomeController (SmartTrafficMonitor).
+info: Microsoft.EntityFrameworkCore.Infrastructure[10403]
+      Entity Framework Core 6.0.0 initialized 'ApplicationDbContext' using provider 'Npgsql.EntityFrameworkCore.PostgreSQL:6.0.0+025fc55189ae41e3f2b98bcbe4eb44c505653700' with options: None
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (139ms) [Parameters=[@__filters_SensorId_Value_0='?' (DbType = Int32), @__filters_MovementType_1='?', @__filters_Season_2='?', @__filters_PublicTransportRef_Value_3='?' (DbType = Boolean), @__filters_VUScheduleRef_Value_4='?' (DbType = Boolean), @__from_Value_5='?' (DbType = DateTime), @__to_Value_6='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+      SELECT t.sensor_id, t.foot_traffic_count, t.movement_type, t.public_transport_ref, t.season, t.timestamp, t.vehicle_count, t.vu_schedule_ref
+      FROM traffictable AS t
+      WHERE ((((((t.sensor_id = @__filters_SensorId_Value_0) AND (t.movement_type = @__filters_MovementType_1)) AND (t.season = @__filters_Season_2)) AND (t.public_transport_ref = @__filters_PublicTransportRef_Value_3)) AND (t.vu_schedule_ref = @__filters_VUScheduleRef_Value_4)) AND (t.timestamp >= @__from_Value_5)) AND (t.timestamp <= @__to_Value_6)
+      ORDER BY t.timestamp DESC
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[1]
+      Executing ViewResult, running view Index.
+info: Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor[4]
+      Executed ViewResult - view Index executed in 4.827ms.
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[2]
+      Executed action SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor) in 262.4494ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'SmartTrafficMonitor.Controllers.HomeController.Index (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/?SensorId=1&From=2025-08-20T15%3A39&To=2025-08-20T15%3A44&MovementType=Vehicle&Season=Autumn&PublicTransportRef=false&VUScheduleRef=true - - - 200 - text/html;+charset=utf-8 264.4979ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_vs/browserLink - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - -
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_framework/aspnetcore-browser-refresh.js - - - 200 12370 application/javascript;+charset=utf-8 0.7710ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:52507/_vs/browserLink - - - 200 - text/javascript;+charset=UTF-8 13.9284ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:52507/api/heatmap?Zone=Footscray+Park&HeatmapPeriod=Weekly - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor)'
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[3]
+      Route matched with {action = "GetHeatmap", controller = "Heatmap"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetHeatmap(SmartTrafficMonitor.Models.TrafficFilterModel) on controller SmartTrafficMonitor.Controllers.HeatmapController (SmartTrafficMonitor).
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ObjectResultExecutor[1]
+      Executing BadRequestObjectResult, writing value of type 'Microsoft.AspNetCore.Mvc.ValidationProblemDetails'.
+info: Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker[2]
+      Executed action SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor) in 0.993ms
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'SmartTrafficMonitor.Controllers.HeatmapController.GetHeatmap (SmartTrafficMonitor)'
