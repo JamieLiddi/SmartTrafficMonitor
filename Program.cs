@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 //Adding the services to the container.
