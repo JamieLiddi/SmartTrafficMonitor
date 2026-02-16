@@ -38,7 +38,9 @@
                 <div class="row" style="margin-bottom: 15px;">
                     <div class="col-md-3">
                         <label for="SensorId">Sensor ID</label>
-                        <input type="number" id="SensorId" name="SensorId" class="form-control" value="@(f.SensorId?.ToString() ?? "")" />
+                        <input type="number" id="SensorId" name="SensorId" class="form-control"
+                                    min="1" step="1" placeholder="(Any)"
+                                     value="@(f.SensorId?.ToString() ?? "")" />
                     </div>
 
                     <div class="col-md-3">

@@ -22,6 +22,8 @@ namespace SmartTrafficMonitor.Controllers
         public IActionResult Index([FromQuery] TrafficFilterModel filters)
         {
             filters = filters ?? new TrafficFilterModel(); 
+             if (filters.SensorId == 0)
+                filters.SensorId = null;
             List<TrafficData> results;
 
             try
