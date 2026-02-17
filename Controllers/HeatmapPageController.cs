@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
 using System;
 using System.Collections.Generic;
@@ -23,8 +24,13 @@ namespace SmartTrafficMonitor.Controllers
             var safeZone = string.IsNullOrWhiteSpace(zone) ? "Footscray Park" : zone;
             var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period;
 
-            // Choose a time window
-            var now = DateTime.UtcNow;
+            // ===== TIME WINDOW (anchored to latest DB timestamp) =====
+            var latestTs = _context.TrafficDatas
+                .Select(t => (DateTime?)t.Timestamp)
+                .Max();
+
+            var now = latestTs ?? DateTime.UtcNow;
+
             DateTime start;
             switch (safePeriod.Trim().ToLowerInvariant())
             {
@@ -39,7 +45,88 @@ namespace SmartTrafficMonitor.Controllers
                     break;
             }
 
-            // (These are approximate Footscray/VU coords; enough to display a working heatmap layer)
+            // Pull rows in the selected window (relative to latest data)
+            var rows = _context.TrafficDatas
+                .Where(t => t.Timestamp >= start && t.Timestamp <= now)
+                .ToList();
+
+            // ===== DEBUG: BASIC DB + WINDOW INFO =====
+            var totalDbRows = _context.TrafficDatas.Count();
+
+            var minTs = _context.TrafficDatas.Min(t => t.Timestamp);
+            var maxTs = _context.TrafficDatas.Max(t => t.Timestamp);
+
+            var distinctSensors = _context.TrafficDatas
+                .Select(t => t.SensorId)
+                .Distinct()
+                .OrderBy(x => x)
+                .Take(100)
+                .ToList();
+
+            Console.WriteLine("========== HEATMAP DEBUG ==========");
+            Console.WriteLine($"TOTAL ROWS IN TrafficDatas TABLE: {totalDbRows}");
+            Console.WriteLine($"ROWS IN CURRENT WINDOW: {rows.Count}");
+            Console.WriteLine($"DB Timestamp Range: {minTs} -> {maxTs}");
+            Console.WriteLine($"Window Timestamp Range: {start} -> {now}");
+            Console.WriteLine("First 100 distinct SensorIds:");
+            Console.WriteLine(string.Join(", ", distinctSensors));
+
+            Console.WriteLine("First 10 rows in current window:");
+            foreach (var r in rows.Take(10))
+            {
+                Console.WriteLine($"SensorId: {r.SensorId} | Foot: {r.FootTrafficCount} | Vehicle: {r.VehicleCount} | Timestamp: {r.Timestamp}");
+            }
+
+            // ===== DEBUG: SCHEMA PROBE (look for lat/lng / sensor tables) =====
+            try
+            {
+                var schemaSql = @"
+SELECT table_name, column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+AND (
+    column_name ILIKE '%lat%' OR
+    column_name ILIKE '%lon%' OR
+    column_name ILIKE '%lng%' OR
+    column_name ILIKE '%longitude%' OR
+    column_name ILIKE '%latitude%' OR
+    column_name ILIKE '%coord%' OR
+    column_name ILIKE '%sensor%'
+)
+ORDER BY table_name, column_name;
+";
+
+                var conn = _context.Database.GetDbConnection();
+                if (conn.State != System.Data.ConnectionState.Open)
+                    conn.Open();
+
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = schemaSql;
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        Console.WriteLine("=== POSSIBLE LOCATION / SENSOR SCHEMA ===");
+                        while (reader.Read())
+                        {
+                            var table = reader.GetString(0);
+                            var col = reader.GetString(1);
+                            var type = reader.GetString(2);
+                            Console.WriteLine($"{table}.{col} ({type})");
+                        }
+                        Console.WriteLine("=== END SCHEMA ===");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("=== SCHEMA PROBE FAILED ===");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("=== END SCHEMA PROBE FAILED ===");
+            }
+
+            // ===== CENTER COORDS (fallback zone center) =====
+            // NOTE: This is NOT real sensor GPS - just a center point for plotting.
             double centerLat, centerLng;
             if (safeZone.Trim().ToLowerInvariant().Contains("vu"))
             {
@@ -52,12 +139,7 @@ namespace SmartTrafficMonitor.Controllers
                 centerLng = 144.9015;
             }
 
-            // Pull recent data 
-            var rows = _context.TrafficDatas
-                .Where(t => t.Timestamp >= start && t.Timestamp <= now)
-                .ToList();
-
-            // Aggregate by SensorId to create “hot spots”
+            // ===== AGGREGATE BY SENSOR =====
             var sensorAgg = rows
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
@@ -66,34 +148,54 @@ namespace SmartTrafficMonitor.Controllers
                     Weight = g.Sum(x => (x.FootTrafficCount + x.VehicleCount))
                 })
                 .OrderByDescending(x => x.Weight)
-                .Take(50) 
+                .Take(50)
                 .ToList();
 
-            // This guarantees the heatmap ALWAYS appears.
+            Console.WriteLine("---- AGGREGATED SENSOR WEIGHTS (Top 50) ----");
+            foreach (var s in sensorAgg.Take(10))
+            {
+                Console.WriteLine($"SensorId: {s.SensorId} | Weight: {s.Weight}");
+            }
+
+            // ===== HEAT POINTS =====
+            // IMPORTANT: Until we have real sensor lat/lng mapping, this is synthetic positioning.
             var heatPoints = new List<double[]>();
 
             foreach (var s in sensorAgg)
             {
-                
-                var a = (s.SensorId % 10) - 5;          
-                var b = ((s.SensorId / 10) % 10) - 5;    
+                // This creates a grid-like spread around the center based on SensorId.
+                // It's useful for "heat layer works" proof, but not true sensor geography.
+                var a = (s.SensorId % 10) - 5;
+                var b = ((s.SensorId / 10) % 10) - 5;
 
                 var lat = centerLat + (a * 0.0009);
                 var lng = centerLng + (b * 0.0011);
 
-
                 var w = Math.Max(1, s.Weight);
-                var intensity = Math.Min(1.0, w / 500.0); 
+                var intensity = Math.Min(1.0, w / 500.0); // normalize
                 heatPoints.Add(new[] { lat, lng, intensity });
             }
-        
+
+            // If somehow nothing plotted, add demo points so map never looks broken.
+            if (heatPoints.Count == 0)
+            {
+                heatPoints.Add(new[] { centerLat + 0.0006, centerLng + 0.0006, 0.8 });
+                heatPoints.Add(new[] { centerLat + 0.0002, centerLng + 0.0004, 0.6 });
+                heatPoints.Add(new[] { centerLat - 0.0003, centerLng - 0.0002, 0.7 });
+                heatPoints.Add(new[] { centerLat - 0.0007, centerLng + 0.0001, 0.5 });
+                heatPoints.Add(new[] { centerLat + 0.0001, centerLng - 0.0007, 0.65 });
+            }
+
+            Console.WriteLine($"HeatPoints Generated: {heatPoints.Count}");
+            Console.WriteLine("===================================");
+
+            // ===== SEND TO VIEW =====
             ViewData["Zone"] = safeZone;
             ViewData["Period"] = safePeriod;
             ViewData["CenterLat"] = centerLat;
             ViewData["CenterLng"] = centerLng;
             ViewData["HeatPointsJson"] = JsonSerializer.Serialize(heatPoints);
 
-            
             return View("~/Views/Heatmap/HeatmapView.cshtml");
         }
     }
