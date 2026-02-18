@@ -28,6 +28,60 @@ namespace SmartTrafficMonitor.Controllers
             if (filters.SensorId == 0)
                 filters.SensorId = null;
 
+
+            
+            var hasAnyQueryFilters = Request?.Query != null && Request.Query.Count > 0;
+
+            if (!hasAnyQueryFilters)
+{
+    // Default: show last 7 days from latest DB timestamp (paged, not whole DB)
+    var latestTs = _context.TrafficDatas
+        .Select(t => (DateTime?)t.Timestamp)
+        .Max();
+
+    var anchor = latestTs ?? DateTime.UtcNow;
+
+    filters.Page = 1;
+
+    // Force supported page sizes
+    if (filters.PageSize != 25 && filters.PageSize != 50 && filters.PageSize != 100)
+        filters.PageSize = 25;
+
+    filters.From = anchor.AddDays(-7);
+    filters.To = anchor;
+
+    // Run the normal paged query so the dashboard never loads “empty”
+    Services.PagedResult<TrafficData> defaultPaged;
+    try
+    {
+        defaultPaged = DataService.GetFilteredDataPaged(_context, filters);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving default dashboard data");
+        defaultPaged = new Services.PagedResult<TrafficData>
+        {
+            Items = new List<TrafficData>(),
+            TotalCount = 0,
+            Page = 1,
+            PageSize = filters.PageSize
+        };
+    }
+
+    var defaultVm = new DashboardViewModel
+    {
+        Filters = filters,
+        Results = defaultPaged.Items,
+        TotalCount = defaultPaged.TotalCount,
+        Page = defaultPaged.Page,
+        PageSize = defaultPaged.PageSize,
+        TotalPages = defaultPaged.TotalPages
+    };
+
+    return View(defaultVm);
+}
+
+
             Services.PagedResult<TrafficData> paged;
 
             try

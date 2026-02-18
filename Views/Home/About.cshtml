@@ -14,30 +14,41 @@
     <hr />
 
     <section class="mb-4">
+        <h3 style="font-weight: 600;">Project Overview</h3>
+        <p>
+            Smart Foot Traffic Monitor System is a capstone solution designed to help stakeholders understand movement
+            behaviour across Footscray. It combines <strong>real-time updates</strong> and <strong>historical analysis</strong>
+            to reveal patterns, identify peak periods, and support planning decisions using clear, interactive visualisations.
+        </p>
+    </section>
+
+    <section class="mb-4">
         <h3 style="font-weight: 600;">Purpose</h3>
         <p>
             This system supports evidence-based decision making for councils, transport planners, and local businesses by
-            transforming real-time and historical sensor data into clear visual insights and exportable reports.
+            transforming sensor data into actionable insights. It enables users to explore traffic intensity by location and time,
+            compare trends across different movement types, and export filtered datasets for reporting and further analysis.
         </p>
     </section>
 
     <section class="mb-4">
         <h3 style="font-weight: 600;">Key Capabilities</h3>
         <ul>
-            <li><strong>Interactive heatmaps</strong> (zone-based visualisation of movement intensity).</li>
-            <li><strong>Filtering</strong> by time/date range, zone, movement type, direction, season, and contextual proxies (e.g., weather/transport proximity).</li>
-            <li><strong>Correlation insights</strong> with public transport timing and VU schedule patterns.</li>
-            <li><strong>Exporting</strong> filtered datasets and reports (CSV/PDF).</li>
+            <li><strong>Interactive heatmaps</strong> showing zone-based movement intensity across selected time ranges.</li>
+            <li><strong>Advanced filtering</strong> by time/date range, zone, movement type, direction, season, and other contextual indicators.</li>
+            <li><strong>Contextual insights</strong> by relating traffic patterns to public transport proximity and VU schedule timing.</li>
+            <li><strong>Export tools</strong> for generating filtered outputs and reports in <strong>CSV</strong> and <strong>PDF</strong> formats.</li>
+            <li><strong>Fast dashboard exploration</strong> with paged results to keep the interface responsive and user-friendly.</li>
         </ul>
     </section>
 
     <section class="mb-4">
         <h3 style="font-weight: 600;">Stakeholders</h3>
         <ul>
-            <li><strong>Local councils:</strong> planning, safety, and infrastructure investment.</li>
-            <li><strong>Transport providers:</strong> service planning and peak demand analysis.</li>
-            <li><strong>Victoria University:</strong> campus access patterns and scheduling insights.</li>
-            <li><strong>Local businesses:</strong> foot traffic trends and trading period optimisation.</li>
+            <li><strong>Local councils:</strong> planning, safety improvements, and infrastructure investment.</li>
+            <li><strong>Transport providers:</strong> peak demand analysis and service planning.</li>
+            <li><strong>Victoria University:</strong> access patterns, class scheduling impact, and campus movement insights.</li>
+            <li><strong>Local businesses:</strong> understanding foot traffic trends and optimising trading periods.</li>
         </ul>
     </section>
 
@@ -46,33 +57,70 @@
         <div class="row">
             <div class="col-md-6">
                 <ul>
-                    <li><strong>Performance:</strong> UI responses targeted under 3 seconds.</li>
-                    <li><strong>Update cycle:</strong> new data processed roughly every 15 minutes.</li>
-                    <li><strong>Scalability:</strong> designed to handle at least 10× data growth.</li>
+                    <li><strong>Performance:</strong> UI responses targeted under <strong>3 seconds</strong> per interaction.</li>
+                    <li><strong>Update cycle:</strong> new data processed approximately every <strong>15 minutes</strong>.</li>
+                    <li><strong>Scalability:</strong> designed to support at least <strong>10×</strong> dataset growth.</li>
+                    <li><strong>Availability:</strong> targeted uptime of <strong>99.9%</strong> for reliable access.</li>
                 </ul>
             </div>
             <div class="col-md-6">
                 <ul>
-                    <li><strong>Security:</strong> TLS in transit and encrypted storage where applicable.</li>
-                    <li><strong>Access control:</strong> role-based access with optional 2FA support.</li>
-                    <li><strong>Accessibility:</strong> WCAG-aligned UI practices (labels, contrast, keyboard use).</li>
+                    <li><strong>Security:</strong> TLS in transit and encrypted storage where applicable (AES-256 aligned).</li>
+                    <li><strong>Access control:</strong> role-based access control (RBAC) with optional 2FA support.</li>
+                    <li><strong>Accessibility:</strong> WCAG 2.1-aligned UI practices (labels, contrast, keyboard use).</li>
+                    <li><strong>Audit & retention:</strong> activity logging and GDPR-style data retention considerations.</li>
                 </ul>
             </div>
         </div>
     </section>
 
-    <section class="mb-5">
+    <section class="mb-4">
         <h3 style="font-weight: 600;">High-Level Architecture</h3>
         <ol>
-            <li><strong>Ingestion:</strong> sensor feeds and CSV imports (historical datasets).</li>
-            <li><strong>Processing:</strong> validation + cleaning + aggregation (time buckets / zones).</li>
-            <li><strong>Storage:</strong> structured database for fast filtering and reporting.</li>
-            <li><strong>Visualisation:</strong> heatmaps + charts + export generation.</li>
+            <li><strong>Ingestion:</strong> sensor feeds (real-time) and CSV imports (historical datasets).</li>
+            <li><strong>Processing:</strong> validation, cleaning, enrichment, and aggregation (time buckets / zones).</li>
+            <li><strong>Storage:</strong> structured database optimised for fast filtering, querying, and reporting.</li>
+            <li><strong>Visualisation:</strong> heatmaps, dashboards, and export generation for stakeholder reporting.</li>
         </ol>
 
         <div class="alert alert-info" role="alert">
             <strong>USP:</strong> Hyper-local, easy-to-read visual insights with contextual signals (seasonal patterns,
             transport proximity, and VU schedule alignment).
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <h3 style="font-weight: 600;">Project Team</h3>
+        <p class="text-muted" style="margin-bottom: 10px;">
+            This project is developed by the following team members:
+        </p>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default" style="margin-bottom: 10px;">
+                    <div class="panel-body">
+                        <h4 style="margin-top:0; margin-bottom:6px;"><strong>Jamie Liddicoat</strong></h4>
+                        <div><strong>Student ID:</strong> 8107062</div>
+                        <div><strong>Email:</strong> s8107062@live.vu.edu.au</div>
+                        <div class="text-muted" style="margin-top:8px;">
+                            Contribution: Backend integration, data filtering/paging, heatmap/dashboard UI design.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel panel-default" style="margin-bottom: 10px;">
+                    <div class="panel-body">
+                        <h4 style="margin-top:0; margin-bottom:6px;"><strong>Ethan O'Neil</strong></h4>
+                        <div><strong>Student ID:</strong> Ethan Student ID HERE</div>
+                        <div><strong>Email:</strong> Ethan Student Email HERE</div>
+                        <div class="text-muted" style="margin-top:8px;">
+                            Contribution: Database implementation, analysis support, documentation and testing.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </div>

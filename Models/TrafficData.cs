@@ -44,23 +44,22 @@ namespace SmartTrafficMonitor.Models
         public bool VuScheduleRef { get; set; }
     }
 
-    // View/filter model (NOT an EF entity)
+    // traffic filter model
     public class TrafficFilterModel
     {
-        // From your UI
         public int? SensorId { get; set; }
 
-        public DateTime? From { get; set; }          // matches Index.cshtml
-        public DateTime? To { get; set; }            // matches Index.cshtml
+        public DateTime? From { get; set; }
+        public DateTime? To { get; set; }
 
-        public string? MovementType { get; set; }    // Pedestrian/Vehicle/Cyclist/empty
-        public string? Direction { get; set; }       // North/South/East/West/empty
-        public string? Season { get; set; }          // Summer/Autumn/Winter/Spring/empty
+        public string? MovementType { get; set; }
+        public string? Direction { get; set; }
+        public string? Season { get; set; }
 
         public bool? PublicTransportRef { get; set; }
         public bool? VUScheduleRef { get; set; }
 
-        // Some parts of your app use VuScheduleRef casing - keep compatibility
+        // alternate casing property
         [NotMapped]
         public bool? VuScheduleRef
         {
@@ -71,21 +70,19 @@ namespace SmartTrafficMonitor.Models
         public int? FootTrafficCount { get; set; }
         public int? VehicleCount { get; set; }
 
-        // Heatmap inputs
         public string? Zone { get; set; }
-        public string? HeatmapPeriod { get; set; }    // Weekly/Monthly/Seasonal
+        public string? HeatmapPeriod { get; set; }
 
-        // Legacy names (keep for compatibility if someone calls API with these)
         public DateTime? TimeStamp { get; set; }
         public DateTime? TimeStampStart { get; set; }
         public DateTime? TimeStampEnd { get; set; }
 
-        // Export
-        public string? ExportFormat { get; set; }     // "csv" | "pdf"
+        public string? ExportFormat { get; set; }
 
-        // Paging
         public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 50;       // UI allows 50–100
+
+        // default page size
+        public int PageSize { get; set; } = 25;
     }
 }
 
@@ -93,7 +90,7 @@ namespace SmartTrafficMonitor.Services
 {
     using SmartTrafficMonitor.Models;
 
-    // ONE paged result wrapper (keep it only here to avoid duplicates)
+    // paged result wrapper
     public class PagedResult<T>
     {
         public List<T> Items { get; set; } = new List<T>();
@@ -111,19 +108,22 @@ namespace SmartTrafficMonitor.Services
         }
     }
 
+    // heatmap URL generator
     public static class HeatmapService
     {
         public static string GenerateHeatmap(string? zone, string? period)
         {
-            // Stub implementation (controller/view renders actual map)
             zone = zone ?? "";
             period = period ?? "";
+
             return $"/Heatmap/View?zone={Uri.EscapeDataString(zone)}&period={Uri.EscapeDataString(period)}";
         }
     }
 
+    // export service class
     public static class ExportService
     {
+        // CSV export builder
         public static byte[] GenerateCsv(List<TrafficData> data)
         {
             var sb = new StringBuilder();
@@ -147,34 +147,39 @@ namespace SmartTrafficMonitor.Services
             return Encoding.UTF8.GetBytes(sb.ToString());
         }
 
+        // pdf export placeholder
         public static byte[] GeneratePdf(List<TrafficData> data)
         {
-            // Stub implementation
             return Array.Empty<byte>();
         }
     }
 
+    // data access service
     public static class DataService
     {
-        // ✅ Use this for EXPORT and any “full filtered dataset” use
+        // full filtered list
         public static List<TrafficData> GetFilteredData(ApplicationDbContext context, TrafficFilterModel? filters)
         {
             var q = BuildFilteredQuery(context, filters);
 
-            // Full list (no paging)
             return q
                 .OrderByDescending(t => t.Timestamp)
                 .ToList();
         }
 
-        // ✅ Use this for DASHBOARD RESULTS TABLE (paged)
+        //paged filtered list
         public static PagedResult<TrafficData> GetFilteredDataPaged(ApplicationDbContext context, TrafficFilterModel? filters)
         {
             filters ??= new TrafficFilterModel();
 
-            if (filters.Page <= 0) filters.Page = 1;
-            if (filters.PageSize <= 0) filters.PageSize = 50;
-            if (filters.PageSize > 100) filters.PageSize = 100;
+            if (filters.Page <= 0)
+                filters.Page = 1;
+
+            if (filters.PageSize != 25 && filters.PageSize != 50 && filters.PageSize != 100)
+                filters.PageSize = 25;
+
+            if (filters.PageSize > 100)
+                filters.PageSize = 100;
 
             var q = BuildFilteredQuery(context, filters);
 
@@ -195,7 +200,7 @@ namespace SmartTrafficMonitor.Services
             };
         }
 
-        // Shared filter logic so List + Paged stay consistent
+        //Shared filtering logic
         private static IQueryable<TrafficData> BuildFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
         {
             var q = context.TrafficDatas.AsQueryable();
@@ -208,6 +213,7 @@ namespace SmartTrafficMonitor.Services
 
             if (from.HasValue)
                 from = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
+
             if (to.HasValue)
                 to = DateTime.SpecifyKind(to.Value, DateTimeKind.Utc);
 

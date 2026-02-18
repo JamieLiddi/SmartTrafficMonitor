@@ -1,13 +1,11 @@
 ﻿/* SmartTrafficMonitor CSS SITE */
 
-/*  Base  */
-
 body {
     font-family: 'Inter', sans-serif;
     padding-top: 75px;
     padding-bottom: 30px;
 
-    /*  gradient background */
+    /*  Gradient background */
     background: linear-gradient(to bottom, #f4f7fb 0%, #e9eef5 100%);
     color: #111827;
 }
@@ -175,4 +173,223 @@ label {
     body {
         padding-top: 70px;
     }
+}
+/* CONTACT POPUP */
+.stm-btn {
+  border-radius: 8px;
+}
+
+.stm-modal .modal-header {
+  border-bottom: 1px solid #eee;
+}
+
+.stm-modal .modal-footer {
+  border-top: 1px solid #eee;
+}
+
+.stm-hint {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: #777;
+}
+
+.stm-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stm-modal-footer .stm-left {
+  min-height: 20px;
+}
+
+.stm-modal-footer .stm-right {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+/* dropdown readability fix */
+select.form-control,
+select.stm-export-select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f3f6ff;
+}
+
+/* the opened dropdown list */
+select.form-control option,
+select.stm-export-select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+/* placeholder any option */
+select.form-control option[value=""],
+select.stm-export-select option[value=""] {
+  color: rgba(248, 250, 252, 0.75);
+}
+
+/* Background like the mock */
+body {
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(60, 120, 255, 0.18), transparent 55%),
+              radial-gradient(1000px 500px at 90% 10%, rgba(255, 160, 80, 0.10), transparent 60%),
+              linear-gradient(180deg, #0b1220 0%, #0f1a2e 45%, #0b1220 100%);
+  color: #e9eefc;
+}
+
+/* Make main container feel like the mock */
+.stm-body {
+  padding-top: 18px;
+}
+
+/* Navbar slightly more “glass” */
+.stm-navbar {
+  background: rgba(9, 14, 26, 0.85) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Cards */
+.panel {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+}
+
+.panel-heading {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  color: #f3f6ff !important;
+}
+
+.panel-body {
+  color: #e9eefc;
+}
+
+/* Header layout inside Results card */
+.stm-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stm-card-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.stm-subtle {
+  color: rgba(233, 238, 252, 0.65);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Export in header */
+.stm-export {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stm-export-select {
+  width: 110px;
+  height: 36px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f3f6ff;
+  border-radius: 10px;
+}
+
+.stm-export-select option {
+  color: #111;
+}
+
+.stm-export-btn {
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f3f6ff;
+}
+
+/* Filters */
+label {
+  color: rgba(233, 238, 252, 0.85);
+}
+
+.form-control {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: #f3f6ff;
+}
+
+.form-control::placeholder {
+  color: rgba(233, 238, 252, 0.45);
+}
+
+/* Results table Container */
+.results-wrap {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.18);
+}
+
+.results-table {
+  background: transparent !important;
+  color: #e9eefc;
+}
+
+.results-table thead th {
+  background: rgba(255,255,255,0.08) !important;
+  color: #f3f6ff !important;
+  border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+.results-table tbody td {
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+.results-table tbody tr:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.stm-pagination > li > a,
+.stm-pagination > li > span {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e9eefc !important;
+  border-radius: 10px !important;
+  margin: 0 4px;
+}
+
+.stm-pagination > li.active > a {
+  background: rgba(80, 140, 255, 0.22) !important;
+  border-color: rgba(80, 140, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+
+.stm-pagination > li.disabled > span,
+.stm-pagination > li.disabled > a {
+  opacity: 0.45;
+}
+
+/* Heatmap view page */
+.stm-heatmap-page,
+.stm-heatmap-page html {
+  height: 100%;
+}
+
+.stm-heatmap-page body {
+  margin: 0;
+}
+
+.stm-heatmap-map {
+  height: 100vh;
+  width: 100%;
 }

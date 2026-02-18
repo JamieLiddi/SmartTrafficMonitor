@@ -1,16 +1,10 @@
 ﻿<Project>
   <ItemGroup>
-    <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.12sylfdn9r.css">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
-      <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"12sylfdn9r"},{"Name":"integrity","Value":"sha256-iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY="},{"Name":"label","Value":"_content/SmartTrafficMonitor/css/site.css"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:55 GMT"}]]]></ResponseHeaders>
-    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"3327"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022iSPjV5Y5Hrt7EF53PKu9E5af1Jf3g3nfJQh4fAmgZLY=\u0022"},{"Name":"Last-Modified","Value":"Mon, 16 Feb 2026 00:37:55 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-Z1Kyy4hjPJD6PV9sgvDZ/Vv26mPE1U5fnMedBtN81X8="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"7827"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Z1Kyy4hjPJD6PV9sgvDZ/Vv26mPE1U5fnMedBtN81X8=\u0022"},{"Name":"Last-Modified","Value":"Wed, 18 Feb 2026 23:13:39 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.min.8qo50a92ce.css">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.min.css'))</AssetFile>
@@ -23,6 +17,12 @@
       <Selectors><![CDATA[[]]]></Selectors>
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-kHvJwvVAK1eJLN4w8xygUR3nbvlLmRwi5yr\u002BOuAO90E="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"282"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022kHvJwvVAK1eJLN4w8xygUR3nbvlLmRwi5yr\u002BOuAO90E=\u0022"},{"Name":"Last-Modified","Value":"Mon, 23 Jun 2025 05:52:12 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/css/site.xq91eqxtnn.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\css\site.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"xq91eqxtnn"},{"Name":"integrity","Value":"sha256-Z1Kyy4hjPJD6PV9sgvDZ/Vv26mPE1U5fnMedBtN81X8="},{"Name":"label","Value":"_content/SmartTrafficMonitor/css/site.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"7827"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u0022Z1Kyy4hjPJD6PV9sgvDZ/Vv26mPE1U5fnMedBtN81X8=\u0022"},{"Name":"Last-Modified","Value":"Wed, 18 Feb 2026 23:13:39 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/favicon.90yqlj465b.ico">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\favicon.ico'))</AssetFile>
@@ -84,17 +84,17 @@
       <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"w24zs667xn"},{"Name":"integrity","Value":"sha256-aJNxc7a4CqF4NF5VHFqWt59nF8aJeRt5DJ9epDvWtUE="},{"Name":"label","Value":"_content/SmartTrafficMonitor/images/banner4.svg"}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"12291"},{"Name":"Content-Type","Value":"image/svg\u002Bxml"},{"Name":"ETag","Value":"\u0022aJNxc7a4CqF4NF5VHFqWt59nF8aJeRt5DJ9epDvWtUE=\u0022"},{"Name":"Last-Modified","Value":"Mon, 23 Jun 2025 05:52:12 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
-    <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/js/site.ikl17aalt5.js">
+    <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/js/site.57rr4hw2j9.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"ikl17aalt5"},{"Name":"integrity","Value":"sha256-ji3\u002BIxbEzYWjzzLCGkF1KDjrT2jLbbrSYXw\u002BAhMPNIA="},{"Name":"label","Value":"_content/SmartTrafficMonitor/js/site.js"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"35"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022ji3\u002BIxbEzYWjzzLCGkF1KDjrT2jLbbrSYXw\u002BAhMPNIA=\u0022"},{"Name":"Last-Modified","Value":"Mon, 23 Jun 2025 05:52:12 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"57rr4hw2j9"},{"Name":"integrity","Value":"sha256-caoUfZbnnG8tR3CSjgqGTHBPElD9fWsIpvDZDjqnOQQ="},{"Name":"label","Value":"_content/SmartTrafficMonitor/js/site.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"2021"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022caoUfZbnnG8tR3CSjgqGTHBPElD9fWsIpvDZDjqnOQQ=\u0022"},{"Name":"Last-Modified","Value":"Wed, 18 Feb 2026 08:57:23 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/js/site.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-ji3\u002BIxbEzYWjzzLCGkF1KDjrT2jLbbrSYXw\u002BAhMPNIA="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"35"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022ji3\u002BIxbEzYWjzzLCGkF1KDjrT2jLbbrSYXw\u002BAhMPNIA=\u0022"},{"Name":"Last-Modified","Value":"Mon, 23 Jun 2025 05:52:12 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-caoUfZbnnG8tR3CSjgqGTHBPElD9fWsIpvDZDjqnOQQ="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"2021"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022caoUfZbnnG8tR3CSjgqGTHBPElD9fWsIpvDZDjqnOQQ=\u0022"},{"Name":"Last-Modified","Value":"Wed, 18 Feb 2026 08:57:23 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/SmartTrafficMonitor/js/site.min.5ipweew5fc.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.min.js'))</AssetFile>

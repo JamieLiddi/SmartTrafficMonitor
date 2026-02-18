@@ -8,7 +8,6 @@
 
     string fmtDate(DateTime? dt)
     {
-        // datetime-local expects: yyyy-MM-ddTHH:mm
         return dt.HasValue ? dt.Value.ToString("yyyy-MM-ddTHH:mm") : "";
     }
 
@@ -19,29 +18,97 @@
         if (!v.HasValue) return "";
         return v.Value ? "true" : "false";
     }
+
+    // Heatmap defaults
+    var heatmapZone = string.IsNullOrWhiteSpace(f.Zone) ? "Footscray Park" : f.Zone;
+    var heatmapPeriod = string.IsNullOrWhiteSpace(f.HeatmapPeriod) ? "Weekly" : f.HeatmapPeriod;
+
+    // Heatmap iframe src builder
+    string buildHeatmapSrc()
+    {
+        var qs = new List<string>();
+
+        qs.Add("zone=" + Uri.EscapeDataString(heatmapZone));
+        qs.Add("period=" + Uri.EscapeDataString(heatmapPeriod));
+
+        if (f.SensorId.HasValue) qs.Add("SensorId=" + f.SensorId.Value);
+        if (f.From.HasValue) qs.Add("From=" + Uri.EscapeDataString(f.From.Value.ToString("o")));
+        if (f.To.HasValue) qs.Add("To=" + Uri.EscapeDataString(f.To.Value.ToString("o")));
+        if (!string.IsNullOrWhiteSpace(f.MovementType)) qs.Add("MovementType=" + Uri.EscapeDataString(f.MovementType));
+        if (!string.IsNullOrWhiteSpace(f.Direction)) qs.Add("Direction=" + Uri.EscapeDataString(f.Direction));
+        if (!string.IsNullOrWhiteSpace(f.Season)) qs.Add("Season=" + Uri.EscapeDataString(f.Season));
+        if (f.PublicTransportRef.HasValue) qs.Add("PublicTransportRef=" + boolToString(f.PublicTransportRef));
+        if (f.VUScheduleRef.HasValue) qs.Add("VUScheduleRef=" + boolToString(f.VUScheduleRef));
+        if (f.FootTrafficCount.HasValue) qs.Add("FootTrafficCount=" + f.FootTrafficCount.Value);
+        if (f.VehicleCount.HasValue) qs.Add("VehicleCount=" + f.VehicleCount.Value);
+
+        return "/Heatmap/View?" + string.Join("&", qs);
+    }
 }
 
-<div class="container mt-4">
+<div class="container mt-4 stm-body stm-dashboard">
 
-    <div class="mb-3">
-        <h3 style="margin-top:0;">SmartTrafficMonitor Dashboard</h3>
-        <p class="text-muted" style="margin-bottom:0;">
-            Filter traffic data, export reports, and preview heatmap output.
+    <div class="mb-3 stm-page-head">
+        <h3 class="stm-title" style="margin-top:0;">Smart Foot Traffic Monitor Dashboard</h3>
+        <p class="stm-subtitle" style="margin-bottom:0;">
+            Filter traffic data, preview heatmap output, and page through results
         </p>
     </div>
 
-    <!-- FILTERS -->
-    <div class="panel panel-default">
-        <div class="panel-heading"><strong>Filters</strong></div>
+    <!-- Heatmap -->
+    <div class="panel panel-default stm-card">
+        <div class="panel-heading"><strong>Heatmap</strong></div>
         <div class="panel-body">
+            <form id="heatmapForm" data-heatmap-base="/Heatmap/View">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="HeatmapZone">Select Zone</label>
+                        <select id="HeatmapZone" class="form-control">
+                            <option value="Footscray Park" selected="@(heatmapZone == "Footscray Park" ? "selected" : null)">Footscray Park</option>
+                            <option value="VU Campus" selected="@(heatmapZone == "VU Campus" ? "selected" : null)">VU Campus</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="HeatmapPeriod">Select Time Period</label>
+                        <select id="HeatmapPeriod" class="form-control">
+                            <option value="Weekly" selected="@(heatmapPeriod == "Weekly" ? "selected" : null)">Weekly</option>
+                            <option value="Monthly" selected="@(heatmapPeriod == "Monthly" ? "selected" : null)">Monthly</option>
+                            <option value="Seasonal" selected="@(heatmapPeriod == "Seasonal" ? "selected" : null)">Seasonal</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4" style="padding-top: 24px;">
+                        <button type="submit" class="btn btn-warning stm-primary-btn" style="width:100%;">Generate Heatmap</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="mt-4 stm-heatmap-preview" style="margin-top:15px;">
+                <h4 style="margin-top:0;">Heatmap Preview</h4>
+                <iframe id="heatmapFrame"
+                        src="@buildHeatmapSrc()"
+                        width="100%"
+                        height="500"
+                        class="stm-heatmap-frame"
+                        style="border:1px solid rgba(255,255,255,0.10);"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- filters -->
+    <div class="panel panel-default stm-card">
+        <div class="panel-heading"><strong>Filters</strong></div>
+        <div class="panel-body compact-filters">
             <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
-            <input type="hidden" name="Page" value="1" />
-                <div class="row" style="margin-bottom: 15px;">
+                <input type="hidden" name="Page" value="1" />
+
+                <div class="row">
                     <div class="col-md-3">
                         <label for="SensorId">Sensor ID</label>
                         <input type="number" id="SensorId" name="SensorId" class="form-control"
-                                    min="1" step="1" placeholder="(Any)"
-                                     value="@(f.SensorId?.ToString() ?? "")" />
+                               min="1" step="1" placeholder="(any)"
+                               value="@(f.SensorId?.ToString() ?? "")" />
                     </div>
 
                     <div class="col-md-3">
@@ -57,284 +124,331 @@
                     <div class="col-md-3">
                         <label for="MovementType">Movement Type</label>
                         <select id="MovementType" name="MovementType" class="form-control">
-                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.MovementType) ? "selected" : null)">(Any)</option>
-                            <option value="Pedestrian" selected="@(f.MovementType=="Pedestrian" ? "selected" : null)">Pedestrian</option>
-                            <option value="Vehicle" selected="@(f.MovementType=="Vehicle" ? "selected" : null)">Vehicle</option>
-                            <option value="Cyclist" selected="@(f.MovementType=="Cyclist" ? "selected" : null)">Cyclist</option>
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.MovementType) ? "selected" : null)">(any)</option>
+                            <option value="Pedestrian" selected="@(f.MovementType == "Pedestrian" ? "selected" : null)">Pedestrian</option>
+                            <option value="Vehicle" selected="@(f.MovementType == "Vehicle" ? "selected" : null)">Vehicle</option>
+                            <option value="Cyclist" selected="@(f.MovementType == "Cyclist" ? "selected" : null)">Cyclist</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="row" style="margin-bottom: 15px;">
+                <div class="row">
                     <div class="col-md-3">
-                        <label for="Direction">Direction</label>
+                        <label for="Direction">direction</label>
                         <select id="Direction" name="Direction" class="form-control">
-                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Direction) ? "selected" : null)">(Any)</option>
-
-                            <!-- IMPORTANT: values are words to match DB values (e.g., "South") -->
-                            <option value="North" selected="@(f.Direction=="North" ? "selected" : null)">North</option>
-                            <option value="South" selected="@(f.Direction=="South" ? "selected" : null)">South</option>
-                            <option value="East" selected="@(f.Direction=="East" ? "selected" : null)">East</option>
-                            <option value="West" selected="@(f.Direction=="West" ? "selected" : null)">West</option>
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Direction) ? "selected" : null)">(any)</option>
+                            <option value="North" selected="@(f.Direction == "North" ? "selected" : null)">North</option>
+                            <option value="South" selected="@(f.Direction == "South" ? "selected" : null)">South</option>
+                            <option value="East" selected="@(f.Direction == "East" ? "selected" : null)">East</option>
+                            <option value="West" selected="@(f.Direction == "West" ? "selected" : null)">West</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="Season">Season</label>
+                        <label for="Season">season</label>
                         <select id="Season" name="Season" class="form-control">
-                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Season) ? "selected" : null)">(Any)</option>
-                            <option value="Summer" selected="@(f.Season=="Summer" ? "selected" : null)">Summer</option>
-                            <option value="Autumn" selected="@(f.Season=="Autumn" ? "selected" : null)">Autumn</option>
-                            <option value="Winter" selected="@(f.Season=="Winter" ? "selected" : null)">Winter</option>
-                            <option value="Spring" selected="@(f.Season=="Spring" ? "selected" : null)">Spring</option>
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Season) ? "selected" : null)">(any)</option>
+                            <option value="Summer" selected="@(f.Season == "Summer" ? "selected" : null)">Summer</option>
+                            <option value="Autumn" selected="@(f.Season == "Autumn" ? "selected" : null)">Autumn</option>
+                            <option value="Winter" selected="@(f.Season == "Winter" ? "selected" : null)">Winter</option>
+                            <option value="Spring" selected="@(f.Season == "Spring" ? "selected" : null)">Spring</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="PublicTransportRef">Transport Nearby</label>
+                        <label for="PublicTransportRef">transport nearby</label>
                         <select id="PublicTransportRef" name="PublicTransportRef" class="form-control">
-                            <option value="" selected="@(f.PublicTransportRef == null ? "selected" : null)">(Any)</option>
+                            <option value="" selected="@(f.PublicTransportRef == null ? "selected" : null)">(any)</option>
                             <option value="true" selected="@(f.PublicTransportRef == true ? "selected" : null)">Yes</option>
                             <option value="false" selected="@(f.PublicTransportRef == false ? "selected" : null)">No</option>
                         </select>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="VUScheduleRef">Near VU Schedule</label>
+                        <label for="VUScheduleRef">near vu schedule</label>
                         <select id="VUScheduleRef" name="VUScheduleRef" class="form-control">
-                            <option value="" selected="@(f.VUScheduleRef == null ? "selected" : null)">(Any)</option>
+                            <option value="" selected="@(f.VUScheduleRef == null ? "selected" : null)">(any)</option>
                             <option value="true" selected="@(f.VUScheduleRef == true ? "selected" : null)">Yes</option>
                             <option value="false" selected="@(f.VUScheduleRef == false ? "selected" : null)">No</option>
                         </select>
                     </div>
                 </div>
-                <div class="row" style="margin-bottom: 15px;">
+
+                <!-- Thresholds & paging -->
+                <div class="row">
                     <div class="col-md-3">
-                        <label for="PageSize">Rows per page</label>
+                        <label for="FootTrafficCount">min foot traffic</label>
+                        <input type="number" id="FootTrafficCount" name="FootTrafficCount" class="form-control"
+                               min="0" step="1" placeholder="(any)"
+                               value="@(f.FootTrafficCount?.ToString() ?? "")" />
+                        <div class="help-text">shows rows with foot traffic count greater than or equal to this</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="VehicleCount">min vehicle count</label>
+                        <input type="number" id="VehicleCount" name="VehicleCount" class="form-control"
+                               min="0" step="1" placeholder="(any)"
+                               value="@(f.VehicleCount?.ToString() ?? "")" />
+                        <div class="help-text">shows rows with vehicle count greater than or equal to this</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="PageSize">rows per page</label>
                         <select id="PageSize" name="PageSize" class="form-control">
+                            <option value="25" selected="@(f.PageSize == 25 ? "selected" : null)">25</option>
                             <option value="50" selected="@(f.PageSize == 50 ? "selected" : null)">50</option>
                             <option value="100" selected="@(f.PageSize == 100 ? "selected" : null)">100</option>
                         </select>
                     </div>
+
+                    <div class="col-md-3" style="padding-top:24px;">
+                        <a class="btn btn-default stm-secondary-btn" style="width:100%;" href="@Url.Action("Index","Home")">reset</a>
+                    </div>
                 </div>
+
                 <div class="row">
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Apply Filters</button>
+                        <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">apply filters</button>
                     </div>
                     <div class="col-md-10 text-muted" style="padding-top: 8px;">
                         @if (Model?.Results != null)
                         {
-                            <span>Results: <strong>@Model.Results.Count</strong></span>
+                            <span>results: <strong>@Model.Results.Count</strong></span>
                         }
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
 
-    <!-- EXPORT -->
-    <div class="panel panel-default">
-        <div class="panel-heading"><strong>Export</strong></div>
-        <div class="panel-body">
-            <form id="exportForm" method="get" action="/api/export">
-                <!-- carry filters -->
-                <input type="hidden" name="SensorId" value="@(f.SensorId?.ToString() ?? "")" />
-                <input type="hidden" name="From" value="@fmtDate(f.From)" />
-                <input type="hidden" name="To" value="@fmtDate(f.To)" />
-                <input type="hidden" name="MovementType" value="@(f.MovementType ?? "")" />
-                <input type="hidden" name="Direction" value="@(f.Direction ?? "")" />
-                <input type="hidden" name="Season" value="@(f.Season ?? "")" />
-                <input type="hidden" name="PublicTransportRef" value="@boolToString(f.PublicTransportRef)" />
-                <input type="hidden" name="VUScheduleRef" value="@boolToString(f.VUScheduleRef)" />
+    <!-- results -->
+    <div class="panel panel-default stm-card">
+        <div class="panel-heading stm-card-header">
+            <div class="stm-card-header-left">
+                <strong>results</strong>
+                @if (Model != null)
+                {
+                    <span class="stm-subtle">showing @Model.PageSize of @Model.TotalCount records</span>
+                }
+            </div>
 
-                <div class="row">
-                    <div class="col-md-3">
-                        <label for="ExportFormat">Export Format</label>
-                        <select id="ExportFormat" name="ExportFormat" class="form-control">
-                            <option value="csv">CSV</option>
-                            <option value="pdf">PDF</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3" style="padding-top: 24px;">
-                        <button type="submit" class="btn btn-default" style="width:100%;">Export Report</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+            <div class="stm-card-header-right">
+                <form id="exportForm" method="get" action="/api/export" class="stm-export">
+                    <input type="hidden" name="SensorId" value="@(f.SensorId?.ToString() ?? "")" />
+                    <input type="hidden" name="From" value="@fmtDate(f.From)" />
+                    <input type="hidden" name="To" value="@fmtDate(f.To)" />
+                    <input type="hidden" name="MovementType" value="@(f.MovementType ?? "")" />
+                    <input type="hidden" name="Direction" value="@(f.Direction ?? "")" />
+                    <input type="hidden" name="Season" value="@(f.Season ?? "")" />
+                    <input type="hidden" name="PublicTransportRef" value="@boolToString(f.PublicTransportRef)" />
+                    <input type="hidden" name="VUScheduleRef" value="@boolToString(f.VUScheduleRef)" />
+                    <input type="hidden" name="FootTrafficCount" value="@(f.FootTrafficCount?.ToString() ?? "")" />
+                    <input type="hidden" name="VehicleCount" value="@(f.VehicleCount?.ToString() ?? "")" />
 
-    <!-- HEATMAP -->
-    <div class="panel panel-default">
-        <div class="panel-heading"><strong>Heatmap</strong></div>
-        <div class="panel-body">
-            <form id="heatmapForm">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="HeatmapZone">Select Zone</label>
-                        <select id="HeatmapZone" class="form-control">
-                            <option value="Footscray Park">Footscray Park</option>
-                            <option value="VU Campus">VU Campus</option>
-                        </select>
-                    </div>
+                    <select id="ExportFormat" name="ExportFormat" class="form-control stm-export-select">
+                        <option value="csv">csv</option>
+                        <option value="pdf">pdf</option>
+                    </select>
 
-                    <div class="col-md-4">
-                        <label for="HeatmapPeriod">Select Time Period</label>
-                        <select id="HeatmapPeriod" class="form-control">
-                            <option value="Weekly">Weekly</option>
-                            <option value="Monthly">Monthly</option>
-                            <option value="Seasonal">Seasonal</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4" style="padding-top: 24px;">
-                        <button type="submit" class="btn btn-warning" style="width:100%;">Generate Heatmap</button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="mt-4" style="margin-top:15px;">
-                <h4 style="margin-top:0;">Heatmap Preview</h4>
-                <iframe id="heatmapFrame" src="/Heatmap/View?zone=Footscray%20Park&period=Weekly" width="100%" height="500" style="border:1px solid #ccc;"></iframe>
+                    <button type="submit" class="btn btn-default stm-export-btn">export</button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- RESULTS TABLE -->
-    <div class="panel panel-default">
-        <div class="panel-heading"><strong>Results</strong></div>
         <div class="panel-body">
             @if (Model?.Results != null && Model.Results.Count > 0)
             {
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>Sensor ID</th>
-                            <th>Timestamp</th>
-                            <th>Movement</th>
-                            <th>Direction</th>
-                            <th>Season</th>
-                            <th>Foot Traffic</th>
-                            <th>Vehicles</th>
-                            <th>Transport Nearby</th>
-                            <th>Near VU</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var r in Model.Results)
-                        {
-                            <tr>
-                                <td>@r.SensorId</td>
-                                <td>@r.Timestamp</td>
-                                <td>@r.MovementType</td>
-                                <td>@r.Direction</td>
-                                <td>@r.Season</td>
-                                <td>@r.FootTrafficCount</td>
-                                <td>@r.VehicleCount</td>
-                                <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
-                                <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px;">
-    <div class="text-muted">
-        Showing page <strong>@Model.Page</strong> of <strong>@Model.TotalPages</strong>
-        — Total rows: <strong>@Model.TotalCount</strong>
-    </div>
+                <div class="results-wrap">
+                    <div class="results-scroll">
+                        <table class="table table-hover results-table">
+                            <thead>
+                                <tr>
+                                    <th>sensor id</th>
+                                    <th>timestamp</th>
+                                    <th>movement</th>
+                                    <th>direction</th>
+                                    <th>season</th>
+                                    <th>foot traffic</th>
+                                    <th>vehicles</th>
+                                    <th>transport nearby</th>
+                                    <th>near vu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.Results)
+                                {
+                                    <tr>
+                                        <td class="cell-mono">@r.SensorId</td>
+                                        <td class="cell-mono">@r.Timestamp</td>
+                                        <td>@r.MovementType</td>
+                                        <td>@r.Direction</td>
+                                        <td>@r.Season</td>
+                                        <td class="cell-mono">@r.FootTrafficCount</td>
+                                        <td class="cell-mono">@r.VehicleCount</td>
+                                        <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
+                                        <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-    <nav aria-label="Results pagination">
-        <ul class="pagination" style="margin:0;">
-            @{
-    var prevDisabled = Model.Page <= 1 ? "disabled" : "";
-    var nextDisabled = Model.Page >= Model.TotalPages ? "disabled" : "";
-}
+                <div class="stm-results-footer" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px;">
+                    <div class="text-muted">
+                        page <strong>@Model.Page</strong> of <strong>@Model.TotalPages</strong>
+                        &nbsp; total rows: <strong>@Model.TotalCount</strong>
+                    </div>
 
-            }
+                    <nav aria-label="results pagination">
+                        <ul class="pagination stm-pagination" style="margin:0;">
+                            @{
+                                var prevDisabled = Model.Page <= 1 ? "disabled" : "";
+                                var nextDisabled = Model.Page >= Model.TotalPages ? "disabled" : "";
 
-            <li class="page-item @prevDisabled">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-controller="Home"
-                   asp-route-Page="@(Model.Page - 1)"
-                   asp-route-PageSize="@Model.PageSize"
-                   asp-route-SensorId="@f.SensorId"
-                   asp-route-From="@f.From"
-                   asp-route-To="@f.To"
-                   asp-route-MovementType="@f.MovementType"
-                   asp-route-Direction="@f.Direction"
-                   asp-route-Season="@f.Season"
-                   asp-route-PublicTransportRef="@f.PublicTransportRef"
-                   asp-route-VUScheduleRef="@f.VUScheduleRef"
-                   asp-route-FootTrafficCount="@f.FootTrafficCount"
-                   asp-route-VehicleCount="@f.VehicleCount">
-                    Prev
-                </a>
-            </li>
+                                var totalPages = Model.TotalPages;
+                                var current = Model.Page;
 
-            <li class="page-item @nextDisabled">
-                <a class="page-link"
-                   asp-action="Index"
-                   asp-controller="Home"
-                   asp-route-Page="@(Model.Page + 1)"
-                   asp-route-PageSize="@Model.PageSize"
-                   asp-route-SensorId="@f.SensorId"
-                   asp-route-From="@f.From"
-                   asp-route-To="@f.To"
-                   asp-route-MovementType="@f.MovementType"
-                   asp-route-Direction="@f.Direction"
-                   asp-route-Season="@f.Season"
-                   asp-route-PublicTransportRef="@f.PublicTransportRef"
-                   asp-route-VUScheduleRef="@f.VUScheduleRef"
-                   asp-route-FootTrafficCount="@f.FootTrafficCount"
-                   asp-route-VehicleCount="@f.VehicleCount">
-                    Next
-                </a>
-            </li>
-        </ul>
-    </nav>
-</div>
+                                int window = 2;
+                                int start = Math.Max(1, current - window);
+                                int end = Math.Min(totalPages, current + window);
+                            }
 
+                            <li class="@prevDisabled">
+                                <a asp-action="Index"
+                                   asp-controller="Home"
+                                   asp-route-Page="@(Model.Page - 1)"
+                                   asp-route-PageSize="@Model.PageSize"
+                                   asp-route-SensorId="@f.SensorId"
+                                   asp-route-From="@f.From"
+                                   asp-route-To="@f.To"
+                                   asp-route-MovementType="@f.MovementType"
+                                   asp-route-Direction="@f.Direction"
+                                   asp-route-Season="@f.Season"
+                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
+                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
+                                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                   asp-route-VehicleCount="@f.VehicleCount">prev</a>
+                            </li>
+
+                            <li class="@(current == 1 ? "active" : "")">
+                                <a asp-action="Index"
+                                   asp-controller="Home"
+                                   asp-route-Page="1"
+                                   asp-route-PageSize="@Model.PageSize"
+                                   asp-route-SensorId="@f.SensorId"
+                                   asp-route-From="@f.From"
+                                   asp-route-To="@f.To"
+                                   asp-route-MovementType="@f.MovementType"
+                                   asp-route-Direction="@f.Direction"
+                                   asp-route-Season="@f.Season"
+                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
+                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
+                                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                   asp-route-VehicleCount="@f.VehicleCount">1</a>
+                            </li>
+
+                            @if (start > 2)
+                            {
+                                <li class="disabled"><span>…</span></li>
+                            }
+
+                            @for (int p = start; p <= end; p++)
+                            {
+                                if (p == 1 || p == totalPages) { continue; }
+
+                                <li class="@(current == p ? "active" : "")">
+                                    <a asp-action="Index"
+                                       asp-controller="Home"
+                                       asp-route-Page="@p"
+                                       asp-route-PageSize="@Model.PageSize"
+                                       asp-route-SensorId="@f.SensorId"
+                                       asp-route-From="@f.From"
+                                       asp-route-To="@f.To"
+                                       asp-route-MovementType="@f.MovementType"
+                                       asp-route-Direction="@f.Direction"
+                                       asp-route-Season="@f.Season"
+                                       asp-route-PublicTransportRef="@f.PublicTransportRef"
+                                       asp-route-VUScheduleRef="@f.VUScheduleRef"
+                                       asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                       asp-route-VehicleCount="@f.VehicleCount">@p</a>
+                                </li>
+                            }
+
+                            @if (end < totalPages - 1)
+                            {
+                                <li class="disabled"><span>…</span></li>
+                            }
+
+                            @if (totalPages > 1)
+                            {
+                                <li class="@(current == totalPages ? "active" : "")">
+                                    <a asp-action="Index"
+                                       asp-controller="Home"
+                                       asp-route-Page="@totalPages"
+                                       asp-route-PageSize="@Model.PageSize"
+                                       asp-route-SensorId="@f.SensorId"
+                                       asp-route-From="@f.From"
+                                       asp-route-To="@f.To"
+                                       asp-route-MovementType="@f.MovementType"
+                                       asp-route-Direction="@f.Direction"
+                                       asp-route-Season="@f.Season"
+                                       asp-route-PublicTransportRef="@f.PublicTransportRef"
+                                       asp-route-VUScheduleRef="@f.VUScheduleRef"
+                                       asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                       asp-route-VehicleCount="@f.VehicleCount">@totalPages</a>
+                                </li>
+                            }
+
+                            <li class="@nextDisabled">
+                                <a asp-action="Index"
+                                   asp-controller="Home"
+                                   asp-route-Page="@(Model.Page + 1)"
+                                   asp-route-PageSize="@Model.PageSize"
+                                   asp-route-SensorId="@f.SensorId"
+                                   asp-route-From="@f.From"
+                                   asp-route-To="@f.To"
+                                   asp-route-MovementType="@f.MovementType"
+                                   asp-route-Direction="@f.Direction"
+                                   asp-route-Season="@f.Season"
+                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
+                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
+                                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                   asp-route-VehicleCount="@f.VehicleCount">next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             }
             else
             {
                 if (hasAnyQueryFilters)
                 {
-                    <p>No data found for the selected filters.</p>
+                    <p>no data found for the selected filters.</p>
                 }
                 else
                 {
-                    <p class="text-muted">Apply filters to view results.</p>
+                    <p class="text-muted">apply filters to view results.</p>
                 }
             }
         </div>
     </div>
 
-    <div class="panel panel-default">
+    <!--Summary area -->
+    <div class="panel panel-default stm-card">
         <div class="panel-heading"><strong>Summary</strong></div>
         <div class="panel-body">
             <p>
-                This dashboard helps visualise traffic patterns across Footscray using smart sensor data.
-                Filter data, generate heatmaps, and export reports for stakeholder use.
+                Dashboard view for traffic monitoring across Footscray zones using sensor data
             </p>
             <ul>
-                <li>Real-time and historical traffic insights</li>
-                <li>Heatmap preview output (placeholder until implemented)</li>
-                <li>Export reports in CSV or PDF format</li>
-                <li>Zone-based and seasonal traffic analysis</li>
+                <li>Filter data & page through results</li>
+                <li>Heatmap preview driven by zone & time period</li>
+                <li>Export reports in CSV or PDF</li>
+                <li>Supports movement type, direction, season, & reference filters</li>
             </ul>
         </div>
     </div>
-</div>
 
-@section Scripts {
-<script>
-    // Load heatmap preview in iframe
-    document.getElementById('heatmapForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var zone = document.getElementById('HeatmapZone').value;
-        var period = document.getElementById('HeatmapPeriod').value;
-        var params = new URLSearchParams({ zone: zone, period: period }).toString();
-        document.getElementById('heatmapFrame').src = '/Heatmap/View?' + params;
-    });
-</script>
-}
+</div>
