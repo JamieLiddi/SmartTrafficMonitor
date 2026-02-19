@@ -13,5 +13,8 @@ namespace SmartTrafficMonitor.Models
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
+        public bool ShowFallbackWarning { get; set; }
+public string FallbackMessage { get; set; } = "";
+
     }
 }

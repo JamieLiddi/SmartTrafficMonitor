@@ -11,6 +11,9 @@ namespace SmartTrafficMonitor.Models
 
         // DbSet for TrafficData model
         public DbSet<TrafficData> TrafficDatas { get; set; }
+        // DbSet for AuditLog model
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
