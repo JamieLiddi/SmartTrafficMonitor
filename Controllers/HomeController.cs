@@ -203,7 +203,7 @@ namespace SmartTrafficMonitor.Controllers
             {
                 case "csv":
                 {
-                    var csv = ExportService.GenerateCsv(data);
+                    var csv = ExportService.GenerateCsv(data, filters, userEmail);
                     _logger.LogInformation("CSV export generated. Rows={RowCount}", data.Count);
 
                     _audit.Log("export_csv", details, true, userEmail, ip);
@@ -213,7 +213,7 @@ namespace SmartTrafficMonitor.Controllers
 
                 case "pdf":
                 {
-                    var pdf = ExportService.GeneratePdf(data);
+                    var pdf = ExportService.GeneratePdf(data, filters, userEmail);
 
                     if (pdf == null || pdf.Length == 0)
                     {
