@@ -1,0 +1,64 @@
+@model List<SmartTrafficMonitor.Models.AuditLog>
+
+@{
+    ViewData["Title"] = "Logs";
+    var page = (int)(ViewBag.Page ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var total = (int)(ViewBag.Total ?? 0);
+}
+
+<div class="container mt-4" style="max-width: 1100px;">
+    <div class="mb-3">
+        <h3 style="margin-top:0;">Logs</h3>
+        <p class="text-muted" style="margin-bottom:0;">Audits for exports, logins, & errors.</p>
+    </div>
+
+    <div class="panel panel-default stm-card">
+        <div class="panel-body">
+            <div class="text-muted" style="margin-bottom:10px;">
+                total rows: <strong>@total</strong>
+            </div>
+
+            <div class="results-wrap">
+                <div class="results-scroll">
+                    <table class="table table-hover results-table">
+                        <thead>
+                            <tr>
+                                <th>timestamp</th>
+                                <th>user</th>
+                                <th>action</th>
+                                <th>success</th>
+                                <th>ip</th>
+                                <th>details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in Model)
+                            {
+                                <tr>
+                                    <td class="cell-mono">@r.TimestampUtc</td>
+                                    <td>@r.UserEmail</td>
+                                    <td>@r.Action</td>
+                                    <td>@(r.Success ? "yes" : "no")</td>
+                                    <td class="cell-mono">@r.Ip</td>
+                                    <td>@r.Details</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                <ul class="pagination" style="margin:0;">
+                    <li class="@(page <= 1 ? "disabled" : "")">
+                        <a href="@Url.Action("Logs","Admin", new { page = page - 1 })">prev</a>
+                    </li>
+                    <li class="@(page >= totalPages ? "disabled" : "")">
+                        <a href="@Url.Action("Logs","Admin", new { page = page + 1 })">next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

@@ -17,67 +17,97 @@ namespace SmartTrafficMonitor.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.21")
+                .HasAnnotation("ProductVersion", "6.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SmartTrafficMonitor.Models.TrafficData", b =>
+            modelBuilder.Entity("SmartTrafficMonitor.Models.AuditLog", b =>
                 {
-                    // Id (PrimaryKey)
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnName("Id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    // sensor_id
-                    b.Property<int>("SensorId")
-                        .HasColumnType("integer")
-                        .HasColumnName("sensor_id");
-
-                    // timestamp
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("timestamp");
-
-                    // movement_type
-                    b.Property<string>("MovementType")
+                    b.Property<string>("Action")
+                        .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("movement_type");
+                        .HasColumnName("Action");
 
-                    // direction
-                    b.Property<string>("Direction")
+                    b.Property<string>("Details")
                         .HasColumnType("text")
-                        .HasColumnName("direction");
+                        .HasColumnName("Details");
 
-                    // season
-                    b.Property<string>("Season")
+                    b.Property<string>("Ip")
                         .HasColumnType("text")
-                        .HasColumnName("season");
+                        .HasColumnName("Ip");
 
-                    // counts
-                    b.Property<int>("FootTrafficCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("foot_traffic_count");
-
-                    b.Property<int>("VehicleCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("vehicle_count");
-
-                    // flags
-                    b.Property<bool>("PublicTransportRef")
+                    b.Property<bool>("Success")
                         .HasColumnType("boolean")
-                        .HasColumnName("public_transport_ref");
+                        .HasColumnName("Success");
 
-                    b.Property<bool>("VuScheduleRef")
-                        .HasColumnType("boolean")
-                        .HasColumnName("vu_schedule_ref");
+                    b.Property<DateTime>("TimestampUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("TimestampUtc");
+
+                    b.Property<string>("UserEmail")
+                        .HasColumnType("text")
+                        .HasColumnName("UserEmail");
 
                     b.HasKey("Id");
 
-                    //database table & schema
+                    b.ToTable("auditlog", "public");
+                });
+
+            modelBuilder.Entity("SmartTrafficMonitor.Models.TrafficData", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("Id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Direction")
+                        .HasColumnType("text")
+                        .HasColumnName("Direction");
+
+                    b.Property<int>("FootTrafficCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("FootTrafficCount");
+
+                    b.Property<string>("MovementType")
+                        .HasColumnType("text")
+                        .HasColumnName("MovementType");
+
+                    b.Property<bool>("PublicTransportRef")
+                        .HasColumnType("boolean")
+                        .HasColumnName("PublicTransportRef");
+
+                    b.Property<string>("Season")
+                        .HasColumnType("text")
+                        .HasColumnName("Season");
+
+                    b.Property<int>("SensorId")
+                        .HasColumnType("integer")
+                        .HasColumnName("SensorId");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("TimeStamp");
+
+                    b.Property<int>("VehicleCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("VehicleCount");
+
+                    b.Property<bool>("VuScheduleRef")
+                        .HasColumnType("boolean")
+                        .HasColumnName("VUScheduleRef");
+
+                    b.HasKey("Id");
+
                     b.ToTable("traffictable", "public");
                 });
 #pragma warning restore 612, 618

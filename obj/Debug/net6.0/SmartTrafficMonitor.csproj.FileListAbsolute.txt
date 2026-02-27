@@ -128,3 +128,9 @@ C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\SmartTrafficMonitor.gen
 C:\Capstone Project\SmartTrafficMonitor\obj\Debug\net6.0\ref\SmartTrafficMonitor.dll
 C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Humanizer.dll
 C:\Capstone Project\SmartTrafficMonitor\bin\Debug\net6.0\Microsoft.EntityFrameworkCore.Design.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\Otp.NET.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\PdfSharpCore.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\ICSharpCode.SharpZipLib.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\SixLabors.Fonts.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\SixLabors.ImageSharp.dll
+C:\Users\jjlid\source\repos\SmartTrafficMonitor\SmartTrafficMonitor\bin\Debug\net6.0\de\PdfSharpCore.resources.dll

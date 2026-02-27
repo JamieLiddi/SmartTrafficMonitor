@@ -11,6 +11,9 @@ namespace SmartTrafficMonitor.Models
 
         // DbSet for TrafficData model
         public DbSet<TrafficData> TrafficDatas { get; set; }
+        // DbSet for AuditLog model
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,10 +24,17 @@ namespace SmartTrafficMonitor.Models
             modelBuilder.Entity<TrafficData>().ToTable("traffictable", "public");
             modelBuilder.Entity<TrafficData>().HasKey(t => t.Id); // Id = Primary Key
 
+            // Indexes for optimized querying
+            modelBuilder.Entity<TrafficData>().HasIndex(t => t.Timestamp);
+            modelBuilder.Entity<TrafficData>().HasIndex(t => t.SensorId);
+            modelBuilder.Entity<TrafficData>().HasIndex(t => t.MovementType);
+            modelBuilder.Entity<TrafficData>().HasIndex(t => t.Season);
+
+
             //SensorId is NOT auto-generated (it’s a sensor identifier)
-            modelBuilder.Entity<TrafficData>()
-                .Property(t => t.SensorId)
-                .ValueGeneratedNever();
+            // modelBuilder.Entity<TrafficData>()
+            //     .Property(t => t.SensorId)
+            //     .ValueGeneratedNever();
         }
     }
 }
