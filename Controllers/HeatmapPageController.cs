@@ -156,41 +156,41 @@ ORDER BY table_name, column_name;
                 Console.WriteLine($"SensorId: {s.SensorId} | Weight: {s.Weight}");
             }
 
-                // HEAT POINTS NO DATABASE DEPENDENCY
-// HEAT POINTS (prefer DB coordinates, fallback to fake coords)
-var sensorIds = sensorAgg.Select(x => x.SensorId).ToList();
+            // HEAT POINTS (prefer DB coordinates by sensor_slug, fallback to fake coords)
+            var sensorSlugs = sensorAgg.Select(x => x.SensorId).ToList();
 
-var locations = _context.SensorLocations
-    .Where(l => sensorIds.Contains(l.SensorId))
-    .ToDictionary(l => l.SensorId, l => l);
+            var locations = _context.SensorLocations
+                .Where(l => sensorSlugs.Contains(l.SensorSlug))
+                .ToDictionary(l => l.SensorSlug, l => l);
 
-var heatPoints = new List<double[]>();
+            var heatPoints = new List<double[]>();
 
-foreach (var s in sensorAgg)
-{
-    double lat, lng;
+            foreach (var s in sensorAgg)
+            {
+                double lat, lng;
 
-    // Prefer real DB coordinates
-    if (locations.TryGetValue(s.SensorId, out var loc)
-        && loc.Latitude.HasValue
-        && loc.Longitude.HasValue)
-    {
-        lat = loc.Latitude.Value;
-        lng = loc.Longitude.Value;
-    }
-    else
-    {
-        // Fallback to old fake-but-stable coords so the map never breaks
-        var a = (s.SensorId % 10) - 5;
-        var b = ((s.SensorId / 10) % 10) - 5;
+                // Prefer real DB coordinates (match by slug)
+                if (locations.TryGetValue(s.SensorId, out var loc)
+                    && loc.Latitude.HasValue
+                    && loc.Longitude.HasValue)
+                {
+                    lat = loc.Latitude.Value;
+                    lng = loc.Longitude.Value;
+                }
+                else
+                {
+                    // Stable fallback based on slug so the map never breaks
+                    var h = Math.Abs((s.SensorId ?? "").GetHashCode());
+                    var a = (h % 10) - 5;
+                    var b = ((h / 10) % 10) - 5;
 
-        lat = centerLat + (a * 0.0009);
-        lng = centerLng + (b * 0.0011);
-    }
+                    lat = centerLat + (a * 0.0009);
+                    lng = centerLng + (b * 0.0011);
+                }
 
-    var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
-    heatPoints.Add(new[] { lat, lng, intensity });
-}
+                var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
+                heatPoints.Add(new[] { lat, lng, intensity });
+            }
 
             // If somehow nothing plotted, add demo points so map never looks broken.
             if (heatPoints.Count == 0)

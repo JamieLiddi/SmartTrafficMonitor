@@ -17,7 +17,7 @@ namespace SmartTrafficMonitor.Models
         public int Id { get; set; }
 
         [Column("SensorId")]
-        public int SensorId { get; set; }
+        public string SensorId { get; set; } = "";
 
         [Column("TimeStamp")]
         public DateTime Timestamp { get; set; }
