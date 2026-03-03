@@ -170,7 +170,7 @@ ORDER BY table_name, column_name;
                 double lat, lng;
 
                 // Prefer real DB coordinates (match by slug)
-                if (locations.TryGetValue(s.SensorId, out var loc)
+                if (locations.TryGetValue(s.SensorId ?? "", out var loc)
                     && loc.Latitude.HasValue
                     && loc.Longitude.HasValue)
                 {

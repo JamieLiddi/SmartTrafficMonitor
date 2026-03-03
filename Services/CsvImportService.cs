@@ -53,18 +53,23 @@ namespace SmartTrafficMonitor.Services
 
         private static int ImportFile(ApplicationDbContext context, string filePath, string movementType)
         {
-            // Extract SensorId from filename if possible (eg = sensor_12_*.csv)
+            // Extract Sensor SLUG from filename (stored as text in TrafficDatas.SensorId)
             var fileNameNoExt = Path.GetFileNameWithoutExtension(filePath);
             var slug = ExtractSensorSlug(fileNameNoExt);
-            var sensorId = GetOrCreateSensorId(context, slug);
+
+            if (string.IsNullOrWhiteSpace(slug))
+                slug = "unknown-sensor";
+
+            // Ensure a sensor_locations row exists for this slug (coords can be filled later)
+            EnsureSensorLocationExists(context, slug);
 
             var lines = File.ReadAllLines(filePath);
             if (lines.Length <= 1) return 0;
 
-            // existing keys to prevent duplicates 
+            // existing keys to prevent duplicates
             var existingKeys = new HashSet<string>(
                 context.TrafficDatas
-                    .Where(t => t.SensorId == sensorId || sensorId == 0)
+                    .Where(t => t.SensorId == slug)
                     .Select(t => $"{t.SensorId}|{t.Timestamp:O}|{t.MovementType}")
                     .ToList()
             );
@@ -90,7 +95,7 @@ namespace SmartTrafficMonitor.Services
 
                 var row = new TrafficData
                 {
-                    SensorId = sensorId == 0 ? 1 : sensorId,
+                    SensorId = slug,
                     Timestamp = DateTime.SpecifyKind(tsUtc, DateTimeKind.Utc),
                     MovementType = movementType,
                     Direction = "N", // placeholder if not in the CSV
@@ -117,9 +122,27 @@ namespace SmartTrafficMonitor.Services
             return toInsert.Count;
         }
 
+        private static void EnsureSensorLocationExists(ApplicationDbContext context, string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug)) return;
+
+            if (!context.SensorLocations.Any(s => s.SensorSlug == slug))
+            {
+                context.SensorLocations.Add(new SensorLocation
+                {
+                    SensorSlug = slug,
+                    Latitude = null,
+                    Longitude = null,
+                    Zone = ""
+                });
+
+                context.SaveChanges();
+            }
+        }
+
         private static List<string> SafeSplit(string line)
         {
-            // simple CSV split 
+            // simple CSV split
             return line.Split(',').Select(x => x.Trim()).ToList();
         }
 
@@ -163,18 +186,6 @@ namespace SmartTrafficMonitor.Services
             return "Spring";
         }
 
-        private static int? TryExtractSensorId(string fileNameNoExt)
-        {
-            // pull the first number found
-            var digits = new string(fileNameNoExt.Where(char.IsDigit).ToArray());
-            if (string.IsNullOrWhiteSpace(digits)) return null;
-
-            if (int.TryParse(digits, out var id))
-                return id;
-
-            return null;
-        }
-
         private static string ExtractSensorSlug(string fileNameNoExt)
         {
             // Example:
@@ -193,24 +204,6 @@ namespace SmartTrafficMonitor.Services
             // Fallback: try last --- segment
             var parts = fileNameNoExt.Split(new[] { "---" }, StringSplitOptions.RemoveEmptyEntries);
             return parts.LastOrDefault()?.Trim().ToLowerInvariant() ?? "unknown-sensor";
-        }
-
-        private static int GetOrCreateSensorId(ApplicationDbContext context, string slug)
-        {
-            var existing = context.SensorLocations.FirstOrDefault(s => s.SensorSlug == slug);
-            if (existing != null) return existing.SensorId;
-
-            var created = new SensorLocation
-            {
-                SensorSlug = slug,
-                Latitude = null,
-                Longitude = null,
-                Zone = ""
-            };
-
-            context.SensorLocations.Add(created);
-            context.SaveChanges();
-            return created.SensorId;
         }
     }
 }
