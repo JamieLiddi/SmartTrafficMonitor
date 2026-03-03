@@ -161,15 +161,40 @@ var heatPoints = new List<double[]>();
 
 foreach (var s in sensorAgg)
 {
-    // Fake but consistent coordinates based on SensorId
-    var a = (s.SensorId % 10) - 5;
-    var b = ((s.SensorId / 10) % 10) - 5;
+    // Build heatmap points using real coordinates when available (fallback to fake coords)
+var sensorIds = sensorAgg.Select(s => s.SensorId).ToList();
 
-    var lat = centerLat + (a * 0.0009);
-    var lng = centerLng + (b * 0.0011);
+var locations = _context.SensorLocations
+    .Where(l => sensorIds.Contains(l.SensorId))
+    .ToDictionary(l => l.SensorId, l => l);
+
+var heatPoints = new List<double[]>();
+
+foreach (var s in sensorAgg)
+{
+    double lat, lng;
+
+    // Prefer real DB coordinates
+    if (locations.TryGetValue(s.SensorId, out var loc)
+        && loc.Latitude.HasValue
+        && loc.Longitude.HasValue)
+    {
+        lat = loc.Latitude.Value;
+        lng = loc.Longitude.Value;
+    }
+    else
+    {
+        // Fallback to old fake-but-stable coords so the map never breaks
+        var a = (s.SensorId % 10) - 5;
+        var b = ((s.SensorId / 10) % 10) - 5;
+
+        lat = centerLat + (a * 0.0009);
+        lng = centerLng + (b * 0.0011);
+    }
 
     var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
     heatPoints.Add(new[] { lat, lng, intensity });
+}
 }
 
             // If somehow nothing plotted, add demo points so map never looks broken.
