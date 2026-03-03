@@ -24,7 +24,7 @@ namespace SmartTrafficMonitor.Controllers
             var safeZone = string.IsNullOrWhiteSpace(zone) ? "Footscray Park" : zone;
             var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period;
 
-            // TIME WINDOW 
+            // TIME WINDOW
             var latestTs = _context.TrafficDatas
                 .Select(t => (DateTime?)t.Timestamp)
                 .Max();
@@ -50,7 +50,7 @@ namespace SmartTrafficMonitor.Controllers
                 .Where(t => t.Timestamp >= start && t.Timestamp <= now)
                 .ToList();
 
-            //  DEBUG: BASIC DB + WINDOW INFO 
+            // DEBUG: BASIC DB + WINDOW INFO
             var totalDbRows = _context.TrafficDatas.Count();
 
             var minTs = _context.TrafficDatas.Min(t => t.Timestamp);
@@ -77,7 +77,7 @@ namespace SmartTrafficMonitor.Controllers
                 Console.WriteLine($"SensorId: {r.SensorId} | Foot: {r.FootTrafficCount} | Vehicle: {r.VehicleCount} | Timestamp: {r.Timestamp}");
             }
 
-            //  DEBUG: SCHEMA PROBE
+            // DEBUG: SCHEMA PROBE
             try
             {
                 var schemaSql = @"
@@ -125,7 +125,7 @@ ORDER BY table_name, column_name;
                 Console.WriteLine("=== END SCHEMA PROBE FAILED ===");
             }
 
-            //  CENTER COORDS 
+            // CENTER COORDS
             double centerLat, centerLng;
             if (safeZone.Trim().ToLowerInvariant().Contains("vu"))
             {
@@ -138,7 +138,7 @@ ORDER BY table_name, column_name;
                 centerLng = 144.9015;
             }
 
-            //AGGREGATE BY SENSOR 
+            // AGGREGATE BY SENSOR
             var sensorAgg = rows
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
@@ -162,6 +162,10 @@ ORDER BY table_name, column_name;
             var locations = _context.SensorLocations
                 .Where(l => sensorSlugs.Contains(l.SensorSlug))
                 .ToDictionary(l => l.SensorSlug, l => l);
+
+            // NEW: dynamic scaling so intensities are not all 1.0
+            var maxWeight = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Weight) : 0;
+            Console.WriteLine($"MaxWeight in window/top set: {maxWeight}");
 
             var heatPoints = new List<double[]>();
 
@@ -188,7 +192,10 @@ ORDER BY table_name, column_name;
                     lng = centerLng + (b * 0.0011);
                 }
 
-                var intensity = Math.Min(1.0, s.Weight / 10000.0);
+                // NEW: intensity scaled 0..1 relative to maxWeight + optional minimum for visibility
+                var intensity = maxWeight <= 0 ? 0.0 : (double)s.Weight / maxWeight;
+                intensity = Math.Clamp(intensity, 0.05, 1.0);
+
                 heatPoints.Add(new[] { lat, lng, intensity });
             }
 
@@ -205,7 +212,7 @@ ORDER BY table_name, column_name;
             Console.WriteLine($"HeatPoints Generated: {heatPoints.Count}");
             Console.WriteLine("=====================");
 
-            //SEND TO VIEW 
+            // SEND TO VIEW
             ViewData["Zone"] = safeZone;
             ViewData["Period"] = safePeriod;
             ViewData["CenterLat"] = centerLat;
