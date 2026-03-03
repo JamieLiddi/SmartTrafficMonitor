@@ -224,7 +224,7 @@
                         @if (Model != null)
                         {
                             <span>matches: <strong>@Model.TotalCount</strong></span>
-                            <span class="text-muted"> &nbsp; (showing @Model.Results?.Count ?? 0 on this page)</span>
+                            <span class="text-muted"> &nbsp; (showing @(Model.Results?.Count ?? 0) on this page)</span>
                         }
                     </div>
                 </div>
