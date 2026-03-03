@@ -22,7 +22,7 @@ namespace SmartTrafficMonitor.Models
             base.OnModelCreating(modelBuilder);
 
             //Map TrafficData entity to existing "traffictable" table + schema
-            modelBuilder.Entity<TrafficData>().ToTable("traffictable", "public");
+            modelBuilder.Entity<TrafficData>().ToTable("TrafficDatas", "public");
             modelBuilder.Entity<TrafficData>().HasKey(t => t.Id); // Id = Primary Key
 
             // SensorLocation table mapping
