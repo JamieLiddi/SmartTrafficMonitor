@@ -188,7 +188,7 @@ ORDER BY table_name, column_name;
                     lng = centerLng + (b * 0.0011);
                 }
 
-                var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
+                var intensity = Math.Min(1.0, s.Weight / 10000.0);
                 heatPoints.Add(new[] { lat, lng, intensity });
             }
 
