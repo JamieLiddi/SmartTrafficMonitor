@@ -66,9 +66,9 @@ if (app.Environment.IsDevelopment())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var audit = services.GetRequiredService<IAuditLogService>();
 
-        var pedFolder = Path.Combine(app.Environment.ContentRootPath, "data", "pedestrian_count");
-        var vehFolder = Path.Combine(app.Environment.ContentRootPath, "data", "vehicle_count");
-        var cycFolder = Path.Combine(app.Environment.ContentRootPath, "data", "cyclist_count");
+       var pedFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Pedestrian Count");
+       var vehFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Vehicle Count");
+       var cycFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Cyclist Count");
 
         Console.WriteLine("[IMPORT] Starting CSV import...");
         Console.WriteLine($"[IMPORT] Pedestrian folder: {pedFolder}");
