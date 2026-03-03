@@ -157,12 +157,8 @@ ORDER BY table_name, column_name;
             }
 
                 // HEAT POINTS NO DATABASE DEPENDENCY
-var heatPoints = new List<double[]>();
-
-foreach (var s in sensorAgg)
-{
-    // Build heatmap points using real coordinates when available (fallback to fake coords)
-var sensorIds = sensorAgg.Select(s => s.SensorId).ToList();
+// HEAT POINTS (prefer DB coordinates, fallback to fake coords)
+var sensorIds = sensorAgg.Select(x => x.SensorId).ToList();
 
 var locations = _context.SensorLocations
     .Where(l => sensorIds.Contains(l.SensorId))
@@ -194,7 +190,6 @@ foreach (var s in sensorAgg)
 
     var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
     heatPoints.Add(new[] { lat, lng, intensity });
-}
 }
 
             // If somehow nothing plotted, add demo points so map never looks broken.
