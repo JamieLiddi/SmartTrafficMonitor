@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SmartTrafficMonitor.Models
 {
-    [Table("traffictable", Schema = "public")]
+    [Table("TrafficDatas", Schema = "public")]
     public class TrafficData
     {
         [Key]
