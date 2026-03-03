@@ -28,8 +28,10 @@
     {
         var qs = new List<string>();
 
+        // Keep legacy param names + include HeatmapPeriod so it binds to your filter model too
         qs.Add("zone=" + Uri.EscapeDataString(heatmapZone));
         qs.Add("period=" + Uri.EscapeDataString(heatmapPeriod));
+        qs.Add("HeatmapPeriod=" + Uri.EscapeDataString(heatmapPeriod));
 
         if (!string.IsNullOrWhiteSpace(f.SensorId)) qs.Add("SensorId=" + Uri.EscapeDataString(f.SensorId));
         if (f.From.HasValue) qs.Add("From=" + Uri.EscapeDataString(f.From.Value.ToString("o")));
@@ -60,9 +62,7 @@
                 @Model.FallbackMessage
             </div>
         }
-
     </div>
-
 
     <!-- Heatmap -->
     <div class="panel panel-default stm-card">
@@ -114,11 +114,11 @@
 
                 <div class="row">
                     <div class="col-md-3">
-                        <label for="SensorId">Sensor ID</label>
+                        <label for="SensorId">Sensor (slug)</label>
                         <input type="text" id="SensorId" name="SensorId" class="form-control"
                                placeholder="(any)"
                                value="@(f.SensorId ?? "")" />
-                        <div class="help-text">Sensor slug (e.g. footscray-library-car-park)</div>
+                        <div class="help-text">e.g. footscray-library-car-park</div>
                     </div>
 
                     <div class="col-md-3">
@@ -220,14 +220,11 @@
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">apply filters</button>
                     </div>
-
                     <div class="col-md-10 text-muted" style="padding-top: 8px;">
-                        @if (Model?.Results != null)
+                        @if (Model != null)
                         {
-                            <span>
-                                showing: <strong>@Model.Results.Count</strong>
-                                &nbsp;|&nbsp; matched: <strong>@Model.TotalCount</strong>
-                            </span>
+                            <span>matches: <strong>@Model.TotalCount</strong></span>
+                            <span class="text-muted"> &nbsp; (showing @Model.Results?.Count ?? 0 on this page)</span>
                         }
                     </div>
                 </div>
@@ -278,7 +275,7 @@
                         <table class="table table-hover results-table">
                             <thead>
                                 <tr>
-                                    <th>sensor id</th>
+                                    <th>sensor</th>
                                     <th>timestamp</th>
                                     <th>movement</th>
                                     <th>direction</th>
