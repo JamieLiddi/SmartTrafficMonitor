@@ -56,7 +56,7 @@ namespace SmartTrafficMonitor.Services
             // Extract SensorId from filename if possible (eg = sensor_12_*.csv)
             var fileNameNoExt = Path.GetFileNameWithoutExtension(filePath);
             var slug = ExtractSensorSlug(fileNameNoExt);
-            var sensorId = GetOrCreateSensorId(context, slug); ?? 0;
+            var sensorId = GetOrCreateSensorId(context, slug);
 
             var lines = File.ReadAllLines(filePath);
             if (lines.Length <= 1) return 0;
