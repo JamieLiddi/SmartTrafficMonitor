@@ -220,10 +220,14 @@
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">apply filters</button>
                     </div>
+
                     <div class="col-md-10 text-muted" style="padding-top: 8px;">
                         @if (Model?.Results != null)
                         {
-                            <span>results: <strong>@Model.Results.Count</strong></span>
+                            <span>
+                                showing: <strong>@Model.Results.Count</strong>
+                                &nbsp;|&nbsp; matched: <strong>@Model.TotalCount</strong>
+                            </span>
                         }
                     </div>
                 </div>
