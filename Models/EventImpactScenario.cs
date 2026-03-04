@@ -16,6 +16,8 @@ namespace SmartTrafficMonitor.Models
         [Required]
         public string Zone { get; set; } = "All";
 
+        public string? SensorId { get; set; }
+
         [Required, DataType(DataType.Date)]
         public DateTime Date { get; set; } = DateTime.Today;
 

@@ -19,11 +19,11 @@ namespace SmartTrafficMonitor.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index(string? zone, string? date)
+        public IActionResult Index(string? zone, string? date, string? sensor)
         {
             var scenario = new EventImpactScenario();
 
-            // 1) Default Date: use latest DB timestamp so baseline window isn't empty
+            // Default Date: use latest DB timestamp so baseline window isn't empty
             var latestUtc = _context.TrafficDatas
                 .AsNoTracking()
                 .OrderByDescending(t => t.Timestamp)
@@ -32,13 +32,15 @@ namespace SmartTrafficMonitor.Controllers
 
             if (latestUtc.HasValue)
             {
-                // Date picker is local-date based
                 scenario.Date = latestUtc.Value.ToLocalTime().Date;
             }
 
-            // 2) Optional prefill from querystring (e.g. /EventImpact?zone=Footscray%20Park&date=2026-03-01)
+            // Optional prefill from querystring
             if (!string.IsNullOrWhiteSpace(zone))
                 scenario.Zone = zone;
+
+            if (!string.IsNullOrWhiteSpace(sensor))
+                scenario.SensorId = sensor;
 
             if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var parsedDate))
                 scenario.Date = parsedDate.Date;
@@ -67,6 +69,7 @@ namespace SmartTrafficMonitor.Controllers
 
         private EventImpactViewModel BuildVm(EventImpactScenario scenario)
         {
+            // Zones dropdown (only zones that actually exist in SensorLocations)
             var zones = _context.SensorLocations.AsNoTracking()
                 .Where(z => z.Zone != null && z.Zone != "")
                 .Select(z => z.Zone!)
@@ -76,15 +79,47 @@ namespace SmartTrafficMonitor.Controllers
 
             zones.Insert(0, "All");
 
-            // If the scenario.Zone isn't in the dropdown (e.g., no sensor locations yet),
-            // keep it stable by falling back to "All".
             if (string.IsNullOrWhiteSpace(scenario.Zone) || !zones.Contains(scenario.Zone))
                 scenario.Zone = "All";
+
+            // ✅ Sensors dropdown from TrafficDatas (complete list)
+            // If a zone is chosen, filter sensors by that zone using SensorLocations join.
+            IQueryable<string> sensorsQuery;
+
+            if (scenario.Zone == "All")
+            {
+                sensorsQuery = _context.TrafficDatas.AsNoTracking()
+                    .Select(t => t.SensorId)
+                    .Where(id => id != null && id != "")
+                    .Distinct();
+            }
+            else
+            {
+                // Only sensors that have a SensorLocation AND match the chosen zone
+                sensorsQuery =
+                    (from t in _context.TrafficDatas.AsNoTracking()
+                     join sl in _context.SensorLocations.AsNoTracking()
+                         on t.SensorId equals sl.SensorSlug
+                     where sl.Zone == scenario.Zone
+                     select t.SensorId)
+                    .Where(id => id != null && id != "")
+                    .Distinct();
+            }
+
+            var sensors = sensorsQuery
+                .OrderBy(s => s)
+                .ToList();
+
+            sensors.Insert(0, "All");
+
+            if (string.IsNullOrWhiteSpace(scenario.SensorId) || !sensors.Contains(scenario.SensorId))
+                scenario.SensorId = "All";
 
             return new EventImpactViewModel
             {
                 Scenario = scenario,
-                AvailableZones = zones
+                AvailableZones = zones,
+                AvailableSensors = sensors
             };
         }
     }

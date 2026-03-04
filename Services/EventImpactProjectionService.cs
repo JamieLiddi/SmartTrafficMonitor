@@ -38,21 +38,18 @@ namespace SmartTrafficMonitor.Services
             var end = DateTime.SpecifyKind(s.Date.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
             var start = end.AddDays(-(s.LookbackWeeks * 7));
 
-            // Build query, then join to SensorLocations to filter zone.
+            // Base traffic query (date window)
             var traffic = _context.TrafficDatas.AsNoTracking()
                 .Where(t => t.Timestamp >= start && t.Timestamp <= end);
 
-            // Filter to target day-of-week (EF may not translate DayOfWeek reliably depending on provider)
-            // We'll do this safely by pulling minimal columns then filtering in-memory after zone join.
-            // For performance, keep the date window tight (LookbackWeeks) and zone filter early.
-
-            // Join to sensor_locations
+            // Join to sensor_locations so we can filter by zone (and still handle missing locations)
             var joined = from t in traffic
                          join sl in _context.SensorLocations.AsNoTracking()
                              on t.SensorId equals sl.SensorSlug into slj
                          from sl in slj.DefaultIfEmpty()
                          select new
                          {
+                             t.SensorId,              // ✅ added so we can filter by sensor
                              t.Timestamp,
                              t.MovementType,
                              t.FootTrafficCount,
@@ -60,19 +57,22 @@ namespace SmartTrafficMonitor.Services
                              Zone = sl != null ? sl.Zone : null
                          };
 
+            // Zone filter
             if (!string.IsNullOrWhiteSpace(s.Zone) && s.Zone != "All")
                 joined = joined.Where(x => x.Zone == s.Zone);
 
-            // Materialize
+            // Sensor filter
+            if (!string.IsNullOrWhiteSpace(s.SensorId) && s.SensorId != "All")
+                joined = joined.Where(x => x.SensorId == s.SensorId);
+
+            // Materialize, then filter by day-of-week safely in-memory
             var rows = joined.ToList()
                 .Where(x => x.Timestamp.DayOfWeek == targetDow)
                 .ToList();
 
-            // Build baseline per hour (0-23)
+            // Baseline value selector
             double GetValue(dynamic r)
             {
-                // MovementType stored as string in your TrafficData model
-                // Foot traffic for Ped/Cyc, VehicleCount for Vehicle
                 return (double)(
                     (s.Movement == ProjectionMovement.Vehicle)
                         ? (r.VehicleCount ?? 0)
