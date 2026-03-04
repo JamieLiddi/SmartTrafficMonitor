@@ -24,7 +24,7 @@ namespace SmartTrafficMonitor.Controllers
             var safeZone = string.IsNullOrWhiteSpace(zone) ? "Footscray Park" : zone;
             var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period;
 
-            // TIME WINDOW 
+            // TIME WINDOW
             var latestTs = _context.TrafficDatas
                 .Select(t => (DateTime?)t.Timestamp)
                 .Max();
@@ -50,7 +50,7 @@ namespace SmartTrafficMonitor.Controllers
                 .Where(t => t.Timestamp >= start && t.Timestamp <= now)
                 .ToList();
 
-            //  DEBUG: BASIC DB + WINDOW INFO 
+            // DEBUG: BASIC DB + WINDOW INFO
             var totalDbRows = _context.TrafficDatas.Count();
 
             var minTs = _context.TrafficDatas.Min(t => t.Timestamp);
@@ -77,7 +77,7 @@ namespace SmartTrafficMonitor.Controllers
                 Console.WriteLine($"SensorId: {r.SensorId} | Foot: {r.FootTrafficCount} | Vehicle: {r.VehicleCount} | Timestamp: {r.Timestamp}");
             }
 
-            //  DEBUG: SCHEMA PROBE
+            // DEBUG: SCHEMA PROBE
             try
             {
                 var schemaSql = @"
@@ -125,7 +125,7 @@ ORDER BY table_name, column_name;
                 Console.WriteLine("=== END SCHEMA PROBE FAILED ===");
             }
 
-            //  CENTER COORDS 
+            // CENTER COORDS
             double centerLat, centerLng;
             if (safeZone.Trim().ToLowerInvariant().Contains("vu"))
             {
@@ -138,7 +138,7 @@ ORDER BY table_name, column_name;
                 centerLng = 144.9015;
             }
 
-            //AGGREGATE BY SENSOR 
+            // AGGREGATE BY SENSOR
             var sensorAgg = rows
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
@@ -156,21 +156,48 @@ ORDER BY table_name, column_name;
                 Console.WriteLine($"SensorId: {s.SensorId} | Weight: {s.Weight}");
             }
 
-                // HEAT POINTS NO DATABASE DEPENDENCY
-var heatPoints = new List<double[]>();
+            // HEAT POINTS (prefer DB coordinates by sensor_slug, fallback to fake coords)
+            var sensorSlugs = sensorAgg.Select(x => x.SensorId).ToList();
 
-foreach (var s in sensorAgg)
-{
-    // Fake but consistent coordinates based on SensorId
-    var a = (s.SensorId % 10) - 5;
-    var b = ((s.SensorId / 10) % 10) - 5;
+            var locations = _context.SensorLocations
+                .Where(l => sensorSlugs.Contains(l.SensorSlug))
+                .ToDictionary(l => l.SensorSlug, l => l);
 
-    var lat = centerLat + (a * 0.0009);
-    var lng = centerLng + (b * 0.0011);
+            // NEW: dynamic scaling so intensities are not all 1.0
+            var maxWeight = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Weight) : 0;
+            Console.WriteLine($"MaxWeight in window/top set: {maxWeight}");
 
-    var intensity = Math.Min(1.0, Math.Max(1, s.Weight) / 500.0);
-    heatPoints.Add(new[] { lat, lng, intensity });
-}
+            var heatPoints = new List<double[]>();
+
+            foreach (var s in sensorAgg)
+            {
+                double lat, lng;
+
+                // Prefer real DB coordinates (match by slug)
+                if (locations.TryGetValue(s.SensorId ?? "", out var loc)
+                    && loc.Latitude.HasValue
+                    && loc.Longitude.HasValue)
+                {
+                    lat = loc.Latitude.Value;
+                    lng = loc.Longitude.Value;
+                }
+                else
+                {
+                    // Stable fallback based on slug so the map never breaks
+                    var h = Math.Abs((s.SensorId ?? "").GetHashCode());
+                    var a = (h % 10) - 5;
+                    var b = ((h / 10) % 10) - 5;
+
+                    lat = centerLat + (a * 0.0009);
+                    lng = centerLng + (b * 0.0011);
+                }
+
+                // NEW: intensity scaled 0..1 relative to maxWeight + optional minimum for visibility
+                var intensity = maxWeight <= 0 ? 0.0 : (double)s.Weight / maxWeight;
+                intensity = Math.Clamp(intensity, 0.05, 1.0);
+
+                heatPoints.Add(new[] { lat, lng, intensity });
+            }
 
             // If somehow nothing plotted, add demo points so map never looks broken.
             if (heatPoints.Count == 0)
@@ -185,7 +212,7 @@ foreach (var s in sensorAgg)
             Console.WriteLine($"HeatPoints Generated: {heatPoints.Count}");
             Console.WriteLine("=====================");
 
-            //SEND TO VIEW 
+            // SEND TO VIEW
             ViewData["Zone"] = safeZone;
             ViewData["Period"] = safePeriod;
             ViewData["CenterLat"] = centerLat;

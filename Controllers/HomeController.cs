@@ -25,8 +25,15 @@ namespace SmartTrafficMonitor.Controllers
         {
             filters = filters ?? new TrafficFilterModel();
 
-            if (filters.SensorId == 0)
+            // SensorId is now a string slug (Postgres text). Normalize it.
+            if (!string.IsNullOrWhiteSpace(filters.SensorId))
+            {
+                filters.SensorId = filters.SensorId.Trim();
+            }
+            else
+            {
                 filters.SensorId = null;
+            }
 
             if (filters.Page <= 0)
                 filters.Page = 1;

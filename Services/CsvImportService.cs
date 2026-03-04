@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
 
 namespace SmartTrafficMonitor.Services
 {
     public static class CsvImportService
     {
-        // Set these folders in appsettings or environment and pass in here from the hosted service.
-        public static int ImportFromFolders(ApplicationDbContext context, IAuditLogService audit, string? pedestrianFolder, string? vehicleFolder, string? cyclistFolder)
+        public static int ImportFromFolders(
+            ApplicationDbContext context,
+            IAuditLogService audit,
+            string? pedestrianFolder,
+            string? vehicleFolder,
+            string? cyclistFolder)
         {
             var totalImported = 0;
 
@@ -44,57 +49,67 @@ namespace SmartTrafficMonitor.Services
             }
 
             if (imported > 0)
-            {
                 audit.Log("csv_import", $"imported movement={movementType} rows={imported}", true, null, null);
-            }
 
             return imported;
         }
 
         private static int ImportFile(ApplicationDbContext context, string filePath, string movementType)
         {
-            // Extract SensorId from filename if possible (eg = sensor_12_*.csv)
-            var sensorId = TryExtractSensorId(Path.GetFileNameWithoutExtension(filePath)) ?? 0;
+            var fileNameNoExt = Path.GetFileNameWithoutExtension(filePath);
+            var slug = ExtractSensorSlug(fileNameNoExt);
+
+            EnsureSensorLocationRow(context, slug);
 
             var lines = File.ReadAllLines(filePath);
             if (lines.Length <= 1) return 0;
 
-            // existing keys to prevent duplicates 
+            // Header-based column detection
+            var header = SplitCsvLine(lines[0]).Select(h => h.Trim().ToLowerInvariant()).ToList();
+
+            int idxDate = header.IndexOf("date");
+            int idxTimestamp = header.IndexOf("timestamp"); // sometimes epoch ms
+            int idxValue = header.IndexOf("value");
+
+            if (idxValue < 0)
+                return 0; // can't import without value
+
+            // Pull existing keys for this sensor+movement to prevent duplicates
             var existingKeys = new HashSet<string>(
                 context.TrafficDatas
-                    .Where(t => t.SensorId == sensorId || sensorId == 0)
+                    .AsNoTracking()
+                    .Where(t => t.SensorId == slug && t.MovementType == movementType)
                     .Select(t => $"{t.SensorId}|{t.Timestamp:O}|{t.MovementType}")
                     .ToList()
             );
 
             var toInsert = new List<TrafficData>();
 
-            // Expecting header: timestamp, footCount, vehicleCount (plus optional extra columns we ignore)
             for (int i = 1; i < lines.Length; i++)
             {
-                var cols = SafeSplit(lines[i]);
-                if (cols.Count < 3) continue;
+                var cols = SplitCsvLine(lines[i]);
+                if (cols.Count <= idxValue) continue;
 
-                if (!TryParseDate(cols[0], out var tsUtc))
+                if (!TryParseTimestamp(cols, idxDate, idxTimestamp, out var tsUtc))
                     continue;
 
-                var foot = TryParseInt(cols.ElementAtOrDefault(1));
-                var veh = TryParseInt(cols.ElementAtOrDefault(2));
-
-                if (foot < 0) foot = 0;
-                if (veh < 0) veh = 0;
+                var value = TryParseValueToInt(cols.ElementAtOrDefault(idxValue));
+                if (value < 0) value = 0;
 
                 var season = GetSeason(tsUtc);
 
                 var row = new TrafficData
                 {
-                    SensorId = sensorId == 0 ? 1 : sensorId,
+                    SensorId = slug,
                     Timestamp = DateTime.SpecifyKind(tsUtc, DateTimeKind.Utc),
                     MovementType = movementType,
-                    Direction = "N", // placeholder if not in the CSV
+                    Direction = "N",
                     Season = season,
-                    FootTrafficCount = foot,
-                    VehicleCount = veh,
+
+                    // Map value into the right column
+                    FootTrafficCount = (movementType == "Vehicle") ? 0 : value,
+                    VehicleCount = (movementType == "Vehicle") ? value : 0,
+
                     PublicTransportRef = false,
                     VuScheduleRef = false
                 };
@@ -115,45 +130,61 @@ namespace SmartTrafficMonitor.Services
             return toInsert.Count;
         }
 
-        private static List<string> SafeSplit(string line)
+        private static List<string> SplitCsvLine(string line)
         {
-            // simple CSV split 
+            // Your files are simple CSV (no quoted commas in fields in the sample),
+            // so a basic split is OK.
             return line.Split(',').Select(x => x.Trim()).ToList();
         }
 
-        private static bool TryParseDate(string raw, out DateTime dt)
+        private static bool TryParseTimestamp(List<string> cols, int idxDate, int idxTimestamp, out DateTime utc)
         {
-            // Accept multiple formats
-            var formats = new[]
+            // Prefer the "date" column (it has timezone like +11:00)
+            if (idxDate >= 0 && idxDate < cols.Count)
             {
-                "yyyy-MM-dd HH:mm:ss",
-                "yyyy-MM-ddTHH:mm:ss",
-                "yyyy-MM-ddTHH:mm:ssZ",
-                "dd/MM/yyyy HH:mm:ss",
-                "dd/MM/yyyy H:mm:ss",
-                "dd/MM/yyyy"
-            };
+                var raw = cols[idxDate];
+                if (!string.IsNullOrWhiteSpace(raw))
+                {
+                    if (DateTimeOffset.TryParse(raw, CultureInfo.InvariantCulture,
+                            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dto))
+                    {
+                        utc = dto.UtcDateTime;
+                        return true;
+                    }
+                }
+            }
 
-            if (DateTime.TryParseExact(raw, formats, CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out dt))
-                return true;
+            // Fallback: "timestamp" column might be epoch ms
+            if (idxTimestamp >= 0 && idxTimestamp < cols.Count)
+            {
+                var raw = cols[idxTimestamp];
+                if (long.TryParse(raw, out var ms) && ms > 0)
+                {
+                    utc = DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime;
+                    return true;
+                }
+            }
 
-            if (DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out dt))
-                return true;
-
-            dt = default(DateTime);
+            utc = default;
             return false;
         }
 
-        private static int TryParseInt(string? raw)
+        private static int TryParseValueToInt(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return 0;
-            return int.TryParse(raw, out var v) ? v : 0;
+
+            // Often looks like "8014.0"
+            if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var d))
+                return (int)Math.Round(d);
+
+            if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
+                return i;
+
+            return 0;
         }
 
         private static string GetSeason(DateTime tsUtc)
         {
-            // AU seasons
             var m = tsUtc.Month;
             if (m == 12 || m == 1 || m == 2) return "Summer";
             if (m >= 3 && m <= 5) return "Autumn";
@@ -161,16 +192,37 @@ namespace SmartTrafficMonitor.Services
             return "Spring";
         }
 
-        private static int? TryExtractSensorId(string fileNameNoExt)
+        private static string ExtractSensorSlug(string fileNameNoExt)
         {
-            // pull the first number found
-            var digits = new string(fileNameNoExt.Where(char.IsDigit).ToArray());
-            if (string.IsNullOrWhiteSpace(digits)) return null;
+            var marker = "video-analytics---";
+            var idx = fileNameNoExt.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
 
-            if (int.TryParse(digits, out var id))
-                return id;
+            if (idx >= 0)
+            {
+                var after = fileNameNoExt[(idx + marker.Length)..];
+                var end = after.IndexOf("__variable", StringComparison.OrdinalIgnoreCase);
+                if (end > 0)
+                    return after[..end].Trim().ToLowerInvariant();
+            }
 
-            return null;
+            var parts = fileNameNoExt.Split(new[] { "---" }, StringSplitOptions.RemoveEmptyEntries);
+            return parts.LastOrDefault()?.Trim().ToLowerInvariant() ?? "unknown-sensor";
+        }
+
+        private static void EnsureSensorLocationRow(ApplicationDbContext context, string slug)
+        {
+            var exists = context.SensorLocations.Any(s => s.SensorSlug == slug);
+            if (exists) return;
+
+            context.SensorLocations.Add(new SensorLocation
+            {
+                SensorSlug = slug,
+                Latitude = null,
+                Longitude = null,
+                Zone = ""
+            });
+
+            context.SaveChanges();
         }
     }
 }

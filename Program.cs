@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using System.IO;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
 using SmartTrafficMonitor.Services;
@@ -8,13 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Services
 builder.Services.AddControllersWithViews();
 
-//Auth settings
+// Auth settings
 builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection("AuthSettings"));
 
-//Audit log service
+// Audit log service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
-//15 mins update hosted service
+// 15 mins update hosted service
 builder.Services.AddHostedService<TrafficUpdateHostedService>();
 
 // Cookie authentication
@@ -54,5 +55,30 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// 🔹 One-time CSV import on startup (Development only)
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var audit = services.GetRequiredService<IAuditLogService>();
+
+       var pedFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Pedestrian Count");
+       var vehFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Vehicle Count");
+       var cycFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Cyclist Count");
+
+        Console.WriteLine("[IMPORT] Starting CSV import...");
+        Console.WriteLine($"[IMPORT] Pedestrian folder: {pedFolder}");
+        Console.WriteLine($"[IMPORT] Vehicle folder:    {vehFolder}");
+        Console.WriteLine($"[IMPORT] Cyclist folder:    {cycFolder}");
+
+        var imported = CsvImportService.ImportFromFolders(context, audit, pedFolder, vehFolder, cycFolder);
+
+        Console.WriteLine($"[IMPORT] Completed. Rows imported = {imported}");
+    }
+}
 
 app.Run();
