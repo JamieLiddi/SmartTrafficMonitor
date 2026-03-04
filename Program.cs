@@ -15,6 +15,9 @@ builder.Services.Configure<AuthSettings>(builder.Configuration.GetSection("AuthS
 // Audit log service
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
+// Event Impact Simulator service
+builder.Services.AddScoped<IEventImpactProjectionService, EventImpactProjectionService>();
+
 // 15 mins update hosted service
 builder.Services.AddHostedService<TrafficUpdateHostedService>();
 
@@ -56,6 +59,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+
 // 🔹 One-time CSV import on startup (Development only)
 if (app.Environment.IsDevelopment())
 {
@@ -66,9 +70,9 @@ if (app.Environment.IsDevelopment())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var audit = services.GetRequiredService<IAuditLogService>();
 
-       var pedFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Pedestrian Count");
-       var vehFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Vehicle Count");
-       var cycFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Cyclist Count");
+        var pedFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Pedestrian Count");
+        var vehFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Vehicle Count");
+        var cycFolder = Path.Combine(app.Environment.ContentRootPath, "data", "Cyclist Count");
 
         Console.WriteLine("[IMPORT] Starting CSV import...");
         Console.WriteLine($"[IMPORT] Pedestrian folder: {pedFolder}");

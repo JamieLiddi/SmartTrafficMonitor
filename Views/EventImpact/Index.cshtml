@@ -1,0 +1,149 @@
+@model SmartTrafficMonitor.Models.EventImpactViewModel
+@using SmartTrafficMonitor.Models
+
+@{
+    ViewData["Title"] = "Event Impact Simulator";
+}
+
+<div class="container mt-4 stm-body">
+    <div class="panel panel-default stm-card">
+        <div class="panel-heading"><strong>Event Impact Simulator</strong></div>
+        <div class="panel-body">
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Zone</label>
+                        <select asp-for="Scenario.Zone" class="form-control">
+                            @foreach (var z in Model.AvailableZones)
+                            {
+                                <option value="@z" selected="@(Model.Scenario.Zone == z ? "selected" : null)">@z</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Date</label>
+                        <input asp-for="Scenario.Date" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Override Day Of Week (optional)</label>
+                        <select asp-for="Scenario.OverrideDayOfWeek" class="form-control">
+                            <option value="">(Use Date)</option>
+                            <option value="Sunday">Sunday</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:12px;">
+                    <div class="col-md-4">
+                        <label>Movement</label>
+                        <select asp-for="Scenario.Movement" class="form-control"
+                                asp-items="Html.GetEnumSelectList<ProjectionMovement>()"></select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Lookback Weeks (baseline)</label>
+                        <input asp-for="Scenario.LookbackWeeks" type="number" class="form-control" min="1" max="52" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Uncertainty band %</label>
+                        <input asp-for="Scenario.UncertaintyPercent" type="number" class="form-control" step="0.1" min="0" max="200" />
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>
+                            <input asp-for="Scenario.HasEvent" type="checkbox" />
+                            Event on?
+                        </label>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Event uplift %</label>
+                        <input asp-for="Scenario.EventUpliftPercent" type="number" class="form-control" step="0.1" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>
+                            <input asp-for="Scenario.HasVuImpact" type="checkbox" />
+                            VU impact?
+                        </label>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>VU uplift %</label>
+                        <input asp-for="Scenario.VuUpliftPercent" type="number" class="form-control" step="0.1" />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:12px;">
+                    <div class="col-md-3">
+                        <label>Start hour (0-23)</label>
+                        <input asp-for="Scenario.StartHour" type="number" class="form-control" min="0" max="23" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Duration hours (1-24)</label>
+                        <input asp-for="Scenario.DurationHours" type="number" class="form-control" min="1" max="24" />
+                    </div>
+
+                    <div class="col-md-6" style="padding-top:24px;">
+                        <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">Simulate</button>
+                    </div>
+                </div>
+            </form>
+
+            @if (Model.Results != null)
+            {
+                <hr />
+                <p>
+                    <strong>Total baseline:</strong> @Model.TotalBaseline<br />
+                    <strong>Total projected:</strong> @Model.TotalProjected<br />
+                    <strong>Delta:</strong> @Model.Delta
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table table-hover results-table">
+                        <thead>
+                            <tr>
+                                <th>Hour</th>
+                                <th>Baseline</th>
+                                <th>Projected</th>
+                                <th>Lower</th>
+                                <th>Upper</th>
+                                <th>Impacted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.Results)
+                            {
+                                <tr>
+                                    <td class="cell-mono">@p.Hour:00</td>
+                                    <td class="cell-mono">@p.Baseline</td>
+                                    <td class="cell-mono"><strong>@p.Projected</strong></td>
+                                    <td class="cell-mono">@p.Lower</td>
+                                    <td class="cell-mono">@p.Upper</td>
+                                    <td>@(p.IsImpacted ? "Yes" : "No")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

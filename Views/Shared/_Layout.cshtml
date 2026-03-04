@@ -47,13 +47,12 @@
                     <span class="icon-bar"></span>
                 </button>
 
-<a asp-area=""
-   asp-controller="Home"
-   asp-action="Index"
-   class="navbar-brand stm-brand">
-    Smart Traffic Monitor
-</a>
-
+                <a asp-area=""
+                   asp-controller="Home"
+                   asp-action="Index"
+                   class="navbar-brand stm-brand">
+                    Smart Traffic Monitor
+                </a>
             </div>
 
             <div class="collapse navbar-collapse" id="stmNavbar">
@@ -61,6 +60,12 @@
                     <li class="@navActive("Home","Index")">
                         <a asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
                     </li>
+
+                    <!-- NEW: Event Impact Simulator -->
+                    <li class="@navActive("EventImpact","Index")">
+                        <a asp-area="" asp-controller="EventImpact" asp-action="Index">Event Impact</a>
+                    </li>
+
                     <li class="@navActive("Home","About")">
                         <a asp-area="" asp-controller="Home" asp-action="About">About</a>
                     </li>

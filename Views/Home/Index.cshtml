@@ -46,6 +46,22 @@
 
         return "/Heatmap/View?" + string.Join("&", qs);
     }
+
+    // Event impact link builder (prefill zone + date)
+    string buildEventImpactHref()
+    {
+        // If you implement binding for these params in EventImpactController later, this will prefill.
+        // Otherwise it still just navigates to the simulator page.
+        var qs = new List<string>();
+
+        // Use heatmap zone as the default zone for simulation
+        if (!string.IsNullOrWhiteSpace(heatmapZone)) qs.Add("zone=" + Uri.EscapeDataString(heatmapZone));
+
+        // Default to today
+        qs.Add("date=" + Uri.EscapeDataString(DateTime.Today.ToString("yyyy-MM-dd")));
+
+        return "/EventImpact" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+    }
 }
 
 <div class="container mt-4 stm-body stm-dashboard">
@@ -101,6 +117,33 @@
                         height="500"
                         class="stm-heatmap-frame"
                         style="border:1px solid rgba(255,255,255,0.10);"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Impact Simulator -->
+    <div class="panel panel-default stm-card">
+        <div class="panel-heading"><strong>Event Impact Simulator</strong></div>
+        <div class="panel-body">
+            <p class="text-muted" style="margin-top:0;">
+                Run "what-if" scenarios (event day, day-of-week override, VU impact) and generate a projected hourly foot traffic profile.
+            </p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="help-text">
+                        <strong>Default inputs:</strong><br />
+                        Zone: <span class="cell-mono">@heatmapZone</span><br />
+                        Date: <span class="cell-mono">@DateTime.Today.ToString("yyyy-MM-dd")</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6" style="padding-top: 6px;">
+                    <a class="btn btn-primary stm-primary-btn" style="width:100%;"
+                       href="@buildEventImpactHref()">
+                        Open Event Impact Simulator
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -458,6 +501,7 @@
                 <li>Heatmap preview driven by zone & time period</li>
                 <li>Export reports in CSV or PDF</li>
                 <li>Supports movement type, direction, season, & reference filters</li>
+                <li>Simulate future impacts with the Event Impact Simulator</li>
             </ul>
         </div>
     </div>
