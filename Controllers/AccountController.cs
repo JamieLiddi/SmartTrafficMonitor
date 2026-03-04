@@ -13,7 +13,7 @@ namespace SmartTrafficMonitor.Controllers
 {
     public class AccountController : Controller
     {
-        /* For simplicity, we have a single admin user defined in config. In a real app, you'd have a user database.
+        /* For simplicity, we have a single admin user defined in the config. In a real app, we would have a user database.
         */
         private readonly AuthSettings _auth;
         private readonly IAuditLogService _audit;
