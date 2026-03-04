@@ -82,33 +82,33 @@ namespace SmartTrafficMonitor.Controllers
             if (string.IsNullOrWhiteSpace(scenario.Zone) || !zones.Contains(scenario.Zone))
                 scenario.Zone = "All";
 
-            // ✅ Sensors dropdown from TrafficDatas (complete list)
-            // If a zone is chosen, filter sensors by that zone using SensorLocations join.
-            IQueryable<string> sensorsQuery;
-
-            if (scenario.Zone == "All")
-            {
-                sensorsQuery = _context.TrafficDatas.AsNoTracking()
-                    .Select(t => t.SensorId)
-                    .Where(id => id != null && id != "")
-                    .Distinct();
-            }
-            else
-            {
-                // Only sensors that have a SensorLocation AND match the chosen zone
-                sensorsQuery =
-                    (from t in _context.TrafficDatas.AsNoTracking()
-                     join sl in _context.SensorLocations.AsNoTracking()
-                         on t.SensorId equals sl.SensorSlug
-                     where sl.Zone == scenario.Zone
-                     select t.SensorId)
-                    .Where(id => id != null && id != "")
-                    .Distinct();
-            }
-
-            var sensors = sensorsQuery
-                .OrderBy(s => s)
+            // ✅ Sensors dropdown from TrafficDatas (COMPLETE LIST ALWAYS)
+            var allSensors = _context.TrafficDatas.AsNoTracking()
+                .Select(t => t.SensorId)
+                .Where(id => id != null && id != "")
+                .Distinct()
+                .OrderBy(id => id)
                 .ToList();
+
+            // If Zone != All, TRY to filter sensors by zone using SensorLocations.
+            // If SensorLocations is incomplete (common), fall back to all sensors so UI never looks empty/limited.
+            var sensors = allSensors;
+
+            if (!string.IsNullOrWhiteSpace(scenario.Zone) && scenario.Zone != "All")
+            {
+                var zoneSensors = (from t in _context.TrafficDatas.AsNoTracking()
+                                   join sl in _context.SensorLocations.AsNoTracking()
+                                       on t.SensorId equals sl.SensorSlug
+                                   where sl.Zone == scenario.Zone
+                                   select t.SensorId)
+                                  .Where(id => id != null && id != "")
+                                  .Distinct()
+                                  .OrderBy(id => id)
+                                  .ToList();
+
+                if (zoneSensors.Count > 0)
+                    sensors = zoneSensors;
+            }
 
             sensors.Insert(0, "All");
 
