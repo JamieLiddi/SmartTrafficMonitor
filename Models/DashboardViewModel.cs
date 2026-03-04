@@ -4,17 +4,19 @@ namespace SmartTrafficMonitor.Models
 {
     public class DashboardViewModel
     {
-        public TrafficFilterModel Filters { get; set; }
+        public TrafficFilterModel Filters { get; set; } = new();
 
-        // Results from the query (after applying filters and paging)
-        public List<TrafficData> Results { get; set; }
+        // ✅ ADD THIS
+        public List<string> AvailableSensors { get; set; } = new();
 
+        // existing stuff...
+        public List<TrafficData> Results { get; set; } = new();
         public int TotalCount { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
-        public bool ShowFallbackWarning { get; set; }
-        public string FallbackMessage { get; set; } = ""; 
 
+        public bool ShowFallbackWarning { get; set; }
+        public string? FallbackMessage { get; set; }
     }
 }

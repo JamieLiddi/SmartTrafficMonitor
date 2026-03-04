@@ -75,6 +75,17 @@ namespace SmartTrafficMonitor.Controllers
                 };
             }
 
+            // ✅ NEW: Sensor dropdown values (from TrafficDatas so it matches real data)
+            var sensors = _context.TrafficDatas
+                .Select(t => t.SensorId)
+                .Where(id => id != null && id != "")
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+
+            // Insert blank option so UI can show "(any)"
+            sensors.Insert(0, "");
+
             var vm = new DashboardViewModel
             {
                 Filters = filters,
@@ -84,6 +95,9 @@ namespace SmartTrafficMonitor.Controllers
                 Page = paged.Page,
                 PageSize = paged.PageSize,
                 TotalPages = paged.TotalPages,
+
+                // ✅ NEW
+                AvailableSensors = sensors,
 
                 ShowFallbackWarning = false,
                 FallbackMessage = ""

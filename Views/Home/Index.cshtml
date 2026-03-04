@@ -18,37 +18,35 @@
         if (!v.HasValue) return "";
         return v.Value ? "true" : "false";
     }
+
     string prettySensor(string slug)
-{
-    if (string.IsNullOrWhiteSpace(slug)) return "";
-
-    // Split slug into parts, handling common delimiters and cleaning up whitespace
-    var parts = slug
-        .Trim()
-        .Replace("_", "-")
-        .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
-        .ToList();
-
-    // Handle common abbreviations & titles
-    for (int i = 0; i < parts.Count; i++)
     {
-        var w = parts[i].ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(slug)) return "";
 
-        if (w == "st") parts[i] = "St";
-        else if (w == "stn") parts[i] = "Station";
-        else if (w == "rd") parts[i] = "Rd";
-        else if (w == "ave") parts[i] = "Ave";
-        else if (w == "mt") parts[i] = "Mt";
-        else if (w == "vu") parts[i] = "VU";
-        else
+        var parts = slug
+            .Trim()
+            .Replace("_", "-")
+            .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .ToList();
+
+        for (int i = 0; i < parts.Count; i++)
         {
-            // Title case for normal words
-            parts[i] = char.ToUpper(parts[i][0]) + parts[i].Substring(1).ToLowerInvariant();
+            var w = parts[i].ToLowerInvariant();
+
+            if (w == "st") parts[i] = "St";
+            else if (w == "stn") parts[i] = "Station";
+            else if (w == "rd") parts[i] = "Rd";
+            else if (w == "ave") parts[i] = "Ave";
+            else if (w == "mt") parts[i] = "Mt";
+            else if (w == "vu") parts[i] = "VU";
+            else
+            {
+                parts[i] = char.ToUpper(parts[i][0]) + parts[i].Substring(1).ToLowerInvariant();
+            }
         }
+
+        return string.Join(" ", parts);
     }
-    // Join parts back into a single string so it looks neater in the UI
-    return string.Join(" ", parts);
-}
 
     // Heatmap defaults
     var heatmapZone = string.IsNullOrWhiteSpace(f.Zone) ? "Footscray Park" : f.Zone;
@@ -59,7 +57,6 @@
     {
         var qs = new List<string>();
 
-        // Keep legacy param names + include HeatmapPeriod so it binds to your filter model too
         qs.Add("zone=" + Uri.EscapeDataString(heatmapZone));
         qs.Add("period=" + Uri.EscapeDataString(heatmapPeriod));
         qs.Add("HeatmapPeriod=" + Uri.EscapeDataString(heatmapPeriod));
@@ -81,14 +78,9 @@
     // Event impact link builder (prefill zone + date)
     string buildEventImpactHref()
     {
-        // If you implement binding for these params in EventImpactController later, this will prefill.
-        // Otherwise it still just navigates to the simulator page.
         var qs = new List<string>();
 
-        // Use heatmap zone as the default zone for simulation
         if (!string.IsNullOrWhiteSpace(heatmapZone)) qs.Add("zone=" + Uri.EscapeDataString(heatmapZone));
-
-        // Default to today
         qs.Add("date=" + Uri.EscapeDataString(DateTime.Today.ToString("yyyy-MM-dd")));
 
         return "/EventImpact" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
@@ -187,12 +179,25 @@
                 <input type="hidden" name="Page" value="1" />
 
                 <div class="row">
+                    <!-- ✅ Sensor dropdown -->
                     <div class="col-md-3">
-                        <label for="SensorId">Sensor (slug)</label>
-                        <input type="text" id="SensorId" name="SensorId" class="form-control"
-                               placeholder="(any)"
-                               value="@(f.SensorId ?? "")" />
-                        <div class="help-text">e.g. footscray-library-car-park</div>
+                        <label for="SensorId">Sensor</label>
+                        <select id="SensorId" name="SensorId" class="form-control">
+                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.SensorId) ? "selected" : null)">(any)</option>
+
+                            @if (Model?.AvailableSensors != null)
+                            {
+                                foreach (var s in Model.AvailableSensors)
+                                {
+                                    if (string.IsNullOrWhiteSpace(s)) { continue; }
+
+                                    <option value="@s" selected="@(f.SensorId == s ? "selected" : null)">
+                                        @prettySensor(s)
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <div class="help-text">Pick a sensor to filter results.</div>
                     </div>
 
                     <div class="col-md-3">

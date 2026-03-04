@@ -32,72 +32,93 @@ namespace SmartTrafficMonitor.Services
 
         public List<ProjectionPoint> ProjectHourly(EventImpactScenario s)
         {
-            var targetDow = s.OverrideDayOfWeek ?? s.Date.DayOfWeek;
+            // Treat the chosen scenario date as a LOCAL day (user is picking a local date)
+            // Then query the DB using UTC boundaries.
+            var localDayStart = DateTime.SpecifyKind(s.Date.Date, DateTimeKind.Local);
+            var localDayEndExclusive = localDayStart.AddDays(1);
 
-            // Lookback window
-            var end = DateTime.SpecifyKind(s.Date.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-            var start = end.AddDays(-(s.LookbackWeeks * 7));
+            // Lookback window (in local days, but converted to UTC for DB query)
+            var lookbackLocalStart = localDayStart.AddDays(-(s.LookbackWeeks * 7));
 
-            // Base traffic query (date window)
+            var startUtc = lookbackLocalStart.ToUniversalTime();
+            var endUtc = localDayEndExclusive.ToUniversalTime().AddTicks(-1);
+
+            var targetDowLocal = s.OverrideDayOfWeek ?? localDayStart.DayOfWeek;
+
+            // Base traffic window in UTC
             var traffic = _context.TrafficDatas.AsNoTracking()
-                .Where(t => t.Timestamp >= start && t.Timestamp <= end);
+                .Where(t => t.Timestamp >= startUtc && t.Timestamp <= endUtc);
 
-            // Join to sensor_locations so we can filter by zone (and still handle missing locations)
+            // Join for zone filtering (zone may be incomplete, but keep existing behaviour)
             var joined = from t in traffic
                          join sl in _context.SensorLocations.AsNoTracking()
                              on t.SensorId equals sl.SensorSlug into slj
                          from sl in slj.DefaultIfEmpty()
                          select new
                          {
-                             t.SensorId,              // ✅ added so we can filter by sensor
-                             t.Timestamp,
+                             t.Timestamp,          // timestamp with tz -> comes through as UTC DateTime
                              t.MovementType,
                              t.FootTrafficCount,
                              t.VehicleCount,
-                             Zone = sl != null ? sl.Zone : null
+                             Zone = sl != null ? sl.Zone : null,
+                             SensorId = t.SensorId
                          };
 
-            // Zone filter
-            if (!string.IsNullOrWhiteSpace(s.Zone) && s.Zone != "All")
-                joined = joined.Where(x => x.Zone == s.Zone);
-
-            // Sensor filter
+            // If a specific sensor is selected, filter by it (this should override zone in your UI)
             if (!string.IsNullOrWhiteSpace(s.SensorId) && s.SensorId != "All")
-                joined = joined.Where(x => x.SensorId == s.SensorId);
-
-            // Materialize, then filter by day-of-week safely in-memory
-            var rows = joined.ToList()
-                .Where(x => x.Timestamp.DayOfWeek == targetDow)
-                .ToList();
-
-            // Baseline value selector
-            double GetValue(dynamic r)
             {
-                return (double)(
-                    (s.Movement == ProjectionMovement.Vehicle)
-                        ? (r.VehicleCount ?? 0)
-                        : (r.FootTrafficCount ?? 0)
-                );
+                joined = joined.Where(x => x.SensorId == s.SensorId);
+            }
+            else if (!string.IsNullOrWhiteSpace(s.Zone) && s.Zone != "All")
+            {
+                joined = joined.Where(x => x.Zone == s.Zone);
             }
 
-            bool MovementMatches(dynamic r)
+            // Materialize then convert to LOCAL for DOW + Hour grouping
+            var rowsLocal = joined
+                .ToList()
+                .Select(x => new
+                {
+                    LocalTime = x.Timestamp.ToLocalTime(),
+                    x.MovementType,
+                    x.FootTrafficCount,
+                    x.VehicleCount
+                })
+                .Where(x => x.LocalTime.DayOfWeek == targetDowLocal)
+                .ToList();
+
+            bool MovementMatches(string movementType)
             {
-                var mt = (string)r.MovementType;
                 return s.Movement switch
                 {
-                    ProjectionMovement.Pedestrian => mt == "Pedestrian",
-                    ProjectionMovement.Cyclist => mt == "Cyclist",
-                    ProjectionMovement.PedestrianPlusCyclist => mt == "Pedestrian" || mt == "Cyclist",
-                    ProjectionMovement.Vehicle => mt == "Vehicle",
+                    ProjectionMovement.Pedestrian => movementType == "Pedestrian",
+                    ProjectionMovement.Cyclist => movementType == "Cyclist",
+                    ProjectionMovement.PedestrianPlusCyclist => movementType == "Pedestrian" || movementType == "Cyclist",
+                    ProjectionMovement.Vehicle => movementType == "Vehicle",
                     _ => false
                 };
             }
 
-            var filtered = rows.Where(MovementMatches).ToList();
+            double GetValue(string movementType, int? footTraffic, int? vehicle)
+            {
+                // Vehicles use VehicleCount, others use FootTrafficCount
+                if (s.Movement == ProjectionMovement.Vehicle)
+                    return vehicle ?? 0;
 
+                return footTraffic ?? 0;
+            }
+
+            var filtered = rowsLocal
+                .Where(r => !string.IsNullOrWhiteSpace(r.MovementType) && MovementMatches(r.MovementType))
+                .ToList();
+
+            // Baseline per LOCAL hour (0-23)
             var baselineByHour = filtered
-                .GroupBy(r => r.Timestamp.Hour)
-                .ToDictionary(g => g.Key, g => g.Average(r => GetValue(r)));
+                .GroupBy(r => r.LocalTime.Hour)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Average(r => GetValue(r.MovementType!, r.FootTrafficCount, r.VehicleCount))
+                );
 
             bool IsInWindow(int hour)
             {

@@ -1,8 +1,36 @@
 @model SmartTrafficMonitor.Models.EventImpactViewModel
 @using SmartTrafficMonitor.Models
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Event Impact Simulator";
+    var s = Model.Scenario;
+
+    string PrettySensor(string slug)
+    {
+        if (string.IsNullOrWhiteSpace(slug)) return "";
+
+        var parts = slug
+            .Trim()
+            .Replace("_", "-")
+            .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
+            .ToList();
+
+        for (int i = 0; i < parts.Count; i++)
+        {
+            var w = parts[i].ToLowerInvariant();
+
+            if (w == "st") parts[i] = "St";
+            else if (w == "stn") parts[i] = "Station";
+            else if (w == "rd") parts[i] = "Rd";
+            else if (w == "ave") parts[i] = "Ave";
+            else if (w == "mt") parts[i] = "Mt";
+            else if (w == "vu") parts[i] = "VU";
+            else parts[i] = char.ToUpper(parts[i][0]) + parts[i].Substring(1).ToLowerInvariant();
+        }
+
+        return string.Join(" ", parts);
+    }
 }
 
 <div class="container mt-4 stm-body">
@@ -16,23 +44,40 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label>Zone</label>
-                        <select asp-for="Scenario.Zone" class="form-control">
+                        <select asp-for="Scenario.Zone" class="form-control" id="ZoneSelect">
                             @foreach (var z in Model.AvailableZones)
                             {
                                 <option value="@z" selected="@(Model.Scenario.Zone == z ? "selected" : null)">@z</option>
                             }
                         </select>
+
+                        <div class="help-text" id="ZoneHelp" style="margin-top:6px;">
+                            Choose a zone to simulate aggregated traffic across sensors in that zone.
+                        </div>
                     </div>
 
                     <div class="col-md-4">
                         <label>Sensor</label>
-                        <select asp-for="Scenario.SensorId" class="form-control">
-                            @foreach (var s in Model.AvailableSensors)
+                        <select asp-for="Scenario.SensorId" class="form-control" id="SensorSelect">
+                            <option value="All" selected="@(string.IsNullOrWhiteSpace(s.SensorId) || s.SensorId == "All" ? "selected" : null)">
+                                All sensors
+                            </option>
+
+                            @if (Model.AvailableSensors != null)
                             {
-                                <option value="@s" selected="@(Model.Scenario.SensorId == s ? "selected" : null)">@s</option>
+                                foreach (var sensor in Model.AvailableSensors)
+                                {
+                                    if (string.IsNullOrWhiteSpace(sensor) || sensor == "All") { continue; }
+                                    <option value="@sensor" selected="@(s.SensorId == sensor ? "selected" : null)">
+                                        @PrettySensor(sensor)
+                                    </option>
+                                }
                             }
                         </select>
-                        <div class="help-text">Choose “All” to simulate the whole zone.</div>
+
+                        <div class="help-text" id="SensorHelp" style="margin-top:6px;">
+                            Choose “All” to simulate the whole zone. Selecting a specific sensor overrides zone filtering.
+                        </div>
                     </div>
 
                     <div class="col-md-4">
@@ -80,38 +125,38 @@
                 <div class="row">
                     <div class="col-md-3">
                         <label>
-                            <input asp-for="Scenario.HasEvent" type="checkbox" />
+                            <input asp-for="Scenario.HasEvent" type="checkbox" id="HasEvent" />
                             Event on?
                         </label>
                     </div>
 
                     <div class="col-md-3">
                         <label>Event uplift %</label>
-                        <input asp-for="Scenario.EventUpliftPercent" type="number" class="form-control" step="0.1" />
+                        <input asp-for="Scenario.EventUpliftPercent" type="number" class="form-control" step="0.1" id="EventUplift" />
                     </div>
 
                     <div class="col-md-3">
                         <label>
-                            <input asp-for="Scenario.HasVuImpact" type="checkbox" />
+                            <input asp-for="Scenario.HasVuImpact" type="checkbox" id="HasVuImpact" />
                             VU impact?
                         </label>
                     </div>
 
                     <div class="col-md-3">
                         <label>VU uplift %</label>
-                        <input asp-for="Scenario.VuUpliftPercent" type="number" class="form-control" step="0.1" />
+                        <input asp-for="Scenario.VuUpliftPercent" type="number" class="form-control" step="0.1" id="VuUplift" />
                     </div>
                 </div>
 
                 <div class="row" style="margin-top:12px;">
                     <div class="col-md-3">
                         <label>Start hour (0-23)</label>
-                        <input asp-for="Scenario.StartHour" type="number" class="form-control" min="0" max="23" />
+                        <input asp-for="Scenario.StartHour" type="number" class="form-control" min="0" max="23" id="StartHour" />
                     </div>
 
                     <div class="col-md-3">
                         <label>Duration hours (1-24)</label>
-                        <input asp-for="Scenario.DurationHours" type="number" class="form-control" min="1" max="24" />
+                        <input asp-for="Scenario.DurationHours" type="number" class="form-control" min="1" max="24" id="DurationHours" />
                     </div>
 
                     <div class="col-md-6" style="padding-top:24px;">
@@ -123,11 +168,77 @@
             @if (Model.Results != null)
             {
                 <hr />
-                <p>
-                    <strong>Total baseline:</strong> @Model.TotalBaseline<br />
-                    <strong>Total projected:</strong> @Model.TotalProjected<br />
-                    <strong>Delta:</strong> @Model.Delta
-                </p>
+
+                <div class="alert alert-info" style="margin-bottom:12px;">
+                    <strong>Summary:</strong>
+
+                    @if (Math.Round(Model.Delta, 6) == 0)
+                    {
+                        <text>
+                            Projected total shows <strong>no change</strong>
+                            (0%) compared to baseline for the selected scenario window.
+                        </text>
+                    }
+                    else if (Model.Delta > 0)
+                    {
+                        <text>
+                            Projected total shows an <strong>increase</strong>
+                            of <strong>@Math.Round(Model.PercentChange, 2)%</strong>
+                            (<strong>+@Math.Round(Model.Delta, 2)</strong>)
+                            compared to baseline.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            Projected total shows a <strong>decrease</strong>
+                            of <strong>@Math.Round(Model.PercentChange, 2)%</strong>
+                            (<strong>@Math.Round(Model.Delta, 2)</strong>)
+                            compared to baseline.
+                        </text>
+                    }
+
+                    <div style="margin-top:6px;">
+                        Baseline: <strong>@Math.Round(Model.TotalBaseline, 2)</strong> &nbsp; | &nbsp;
+                        Projected: <strong>@Math.Round(Model.TotalProjected, 2)</strong>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="panel panel-default stm-card" style="margin-bottom:12px;">
+                    <div class="panel-heading"><strong>Projection chart</strong></div>
+                    <div class="panel-body">
+                        <div class="help-text" style="margin-bottom:10px;">
+                            Average hourly traffic: baseline vs projected. Shaded area shows uncertainty band.
+                        </div>
+
+                        <div class="stm-chart-wrap" style="position:relative; height:260px; width:100%;">
+                            <canvas id="projectionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ CSV export button (Step 10-ish but you asked for export) -->
+                <div style="margin-bottom:10px;">
+                    <a class="btn btn-success"
+                       asp-controller="EventImpact"
+                       asp-action="ExportCsv"
+                       asp-route-zone="@Model.Scenario.Zone"
+                       asp-route-sensor="@Model.Scenario.SensorId"
+                       asp-route-date="@(Model.Scenario.Date.ToString("yyyy-MM-dd"))"
+                       asp-route-overrideDayOfWeek="@Model.Scenario.OverrideDayOfWeek"
+                       asp-route-movement="@Model.Scenario.Movement"
+                       asp-route-lookbackWeeks="@Model.Scenario.LookbackWeeks"
+                       asp-route-uncertaintyPercent="@Model.Scenario.UncertaintyPercent"
+                       asp-route-hasEvent="@Model.Scenario.HasEvent"
+                       asp-route-eventUpliftPercent="@Model.Scenario.EventUpliftPercent"
+                       asp-route-hasVuImpact="@Model.Scenario.HasVuImpact"
+                       asp-route-vuUpliftPercent="@Model.Scenario.VuUpliftPercent"
+                       asp-route-startHour="@Model.Scenario.StartHour"
+                       asp-route-durationHours="@Model.Scenario.DurationHours">
+                        Export CSV
+                    </a>
+                </div>
 
                 <div class="table-responsive">
                     <table class="table table-hover results-table">
@@ -136,27 +247,251 @@
                                 <th>Hour</th>
                                 <th>Baseline</th>
                                 <th>Projected</th>
+                                <th>Δ</th>
                                 <th>Lower</th>
                                 <th>Upper</th>
-                                <th>Impacted</th>
+                                <th>Scenario window</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var p in Model.Results)
                             {
-                                <tr>
+                                var d = p.Projected - p.Baseline;
+                                <tr style="@(p.IsImpacted ? "background: rgba(255,255,255,0.04);" : "")">
                                     <td class="cell-mono">@p.Hour:00</td>
                                     <td class="cell-mono">@p.Baseline</td>
                                     <td class="cell-mono"><strong>@p.Projected</strong></td>
+                                    <td class="cell-mono">
+                                        @(Math.Round(d, 2) == 0 ? "0" : (d > 0 ? "+" : "") + Math.Round(d, 2).ToString())
+                                    </td>
                                     <td class="cell-mono">@p.Lower</td>
                                     <td class="cell-mono">@p.Upper</td>
-                                    <td>@(p.IsImpacted ? "Yes" : "No")</td>
+                                    <td>@(p.IsImpacted ? "In window" : "Out")</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
+
+                <!-- JSON payload for chart -->
+                <script type="application/json" id="projectionData">
+@Html.Raw(JsonSerializer.Serialize(Model.Results.Select(r => new {
+    hour = r.Hour,
+    baseline = r.Baseline,
+    projected = r.Projected,
+    delta = r.Projected - r.Baseline,
+    lower = r.Lower,
+    upper = r.Upper,
+    isWindow = r.IsImpacted
+})))
+                </script>
+
+                <script type="application/json" id="scenarioWindow">
+@Html.Raw(JsonSerializer.Serialize(new {
+    startHour = Model.Scenario.StartHour,
+    durationHours = Model.Scenario.DurationHours,
+    hasEvent = Model.Scenario.HasEvent,
+    hasVu = Model.Scenario.HasVuImpact
+}))
+                </script>
             }
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+    (function () {
+        // Zone disabled if sensor selected
+        var sensor = document.getElementById('SensorSelect');
+        var zone = document.getElementById('ZoneSelect');
+        var zoneHelp = document.getElementById('ZoneHelp');
+
+        function syncZoneSensor() {
+            var sensorVal = (sensor && sensor.value) ? sensor.value : 'All';
+            var isSpecificSensor = sensorVal && sensorVal !== 'All';
+
+            if (!zone) return;
+
+            zone.disabled = isSpecificSensor;
+
+            if (zoneHelp) {
+                zoneHelp.innerText = isSpecificSensor
+                    ? 'Zone is disabled because you selected a specific sensor (sensor overrides zone).'
+                    : 'Choose a zone to simulate aggregated traffic across sensors in that zone.';
+            }
+        }
+
+        if (sensor) sensor.addEventListener('change', syncZoneSensor);
+        syncZoneSensor();
+
+        // Step 5: disable uplift fields unless checkbox is checked
+        var hasEvent = document.getElementById('HasEvent');
+        var eventUplift = document.getElementById('EventUplift');
+        var hasVu = document.getElementById('HasVuImpact');
+        var vuUplift = document.getElementById('VuUplift');
+
+        function syncUplifts() {
+            if (hasEvent && eventUplift) {
+                var on = hasEvent.checked === true;
+                eventUplift.disabled = !on;
+                if (!on) eventUplift.value = 0;
+            }
+
+            if (hasVu && vuUplift) {
+                var onVu = hasVu.checked === true;
+                vuUplift.disabled = !onVu;
+                if (!onVu) vuUplift.value = 0;
+            }
+        }
+
+        if (hasEvent) hasEvent.addEventListener('change', syncUplifts);
+        if (hasVu) hasVu.addEventListener('change', syncUplifts);
+        syncUplifts();
+
+        // Render chart if results exist
+        var dataEl = document.getElementById('projectionData');
+        var canvas = document.getElementById('projectionChart');
+        if (!dataEl || !canvas || typeof Chart === 'undefined') return;
+
+        var rows = [];
+        try { rows = JSON.parse(dataEl.textContent || '[]'); } catch (e) { rows = []; }
+        if (!rows || rows.length === 0) return;
+
+        var windowEl = document.getElementById('scenarioWindow');
+        var win = { startHour: 0, durationHours: 0, hasEvent: false, hasVu: false };
+        try { win = JSON.parse(windowEl.textContent || '{}'); } catch (e) { }
+
+        var startHour = Number.isFinite(win.startHour) ? win.startHour : 0;
+        var durationHours = Number.isFinite(win.durationHours) ? win.durationHours : 0;
+
+        var labels = rows.map(r => (r.hour + ':00'));
+        var baseline = rows.map(r => r.baseline);
+        var projected = rows.map(r => r.projected);
+        var lower = rows.map(r => r.lower);
+        var upper = rows.map(r => r.upper);
+        var delta = rows.map(r => r.delta);
+
+        if (canvas._chartInstance) {
+            canvas._chartInstance.destroy();
+            canvas._chartInstance = null;
+        }
+
+        function isHourInWindow(hour, start, duration) {
+            if (!duration || duration <= 0) return false;
+            var end = start + duration;
+            if (end <= 24) return hour >= start && hour < end;
+            var wrapEnd = end % 24;
+            return (hour >= start && hour < 24) || (hour >= 0 && hour < wrapEnd);
+        }
+
+        var windowShadePlugin = {
+            id: 'windowShade',
+            beforeDatasetsDraw(chart, args, pluginOptions) {
+                var opts = pluginOptions || {};
+                if (!opts.enabled) return;
+
+                var ctx = chart.ctx;
+                var chartArea = chart.chartArea;
+                var x = chart.scales.x;
+                if (!chartArea || !x) return;
+
+                var left = chartArea.left;
+                var right = chartArea.right;
+                var top = chartArea.top;
+                var bottom = chartArea.bottom;
+
+                var segments = [];
+                var segStart = null;
+
+                for (var i = 0; i < rows.length; i++) {
+                    var hour = rows[i].hour;
+                    var inWin = isHourInWindow(hour, opts.startHour, opts.durationHours);
+
+                    if (inWin && segStart === null) segStart = i;
+                    if (!inWin && segStart !== null) {
+                        segments.push([segStart, i - 1]);
+                        segStart = null;
+                    }
+                }
+                if (segStart !== null) segments.push([segStart, rows.length - 1]);
+
+                ctx.save();
+                ctx.globalAlpha = 0.18;
+                ctx.fillStyle = opts.fillStyle || '#ffffff';
+
+                segments.forEach(function (seg) {
+                    var i0 = seg[0];
+                    var i1 = seg[1];
+
+                    var x0 = x.getPixelForValue(i0);
+                    var x1 = x.getPixelForValue(i1);
+
+                    var step = (rows.length > 1) ? (x.getPixelForValue(1) - x.getPixelForValue(0)) : 10;
+                    var pad = step / 2;
+
+                    var rectLeft = Math.max(left, x0 - pad);
+                    var rectRight = Math.min(right, x1 + pad);
+
+                    if (rectRight > rectLeft) {
+                        ctx.fillRect(rectLeft, top, rectRight - rectLeft, bottom - top);
+                    }
+                });
+
+                ctx.restore();
+            }
+        };
+
+        var ctx = canvas.getContext('2d');
+
+        var chart = new Chart(ctx, {
+            type: 'line',
+            plugins: [windowShadePlugin],
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Upper (band)', data: upper, borderWidth: 0, pointRadius: 0, tension: 0.25 },
+                    { label: 'Lower (band)', data: lower, borderWidth: 0, pointRadius: 0, tension: 0.25, fill: '-1' },
+                    { label: 'Baseline', data: baseline, borderWidth: 2, pointRadius: 2, tension: 0.25 },
+                    { label: 'Projected', data: projected, borderWidth: 2, pointRadius: 2, tension: 0.25 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                resizeDelay: 150,
+                plugins: {
+                    legend: { display: true },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            footer: function (items) {
+                                if (!items || items.length === 0) return '';
+                                var idx = items[0].dataIndex;
+                                var d = delta[idx] ?? 0;
+                                var sign = (d > 0) ? '+' : '';
+                                return 'Δ: ' + sign + (Math.round(d * 100) / 100);
+                            }
+                        }
+                    },
+                    windowShade: {
+                        enabled: true,
+                        startHour: startHour,
+                        durationHours: durationHours,
+                        fillStyle: '#ffffff'
+                    }
+                },
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+
+        canvas._chartInstance = chart;
+    })();
+    </script>
+}

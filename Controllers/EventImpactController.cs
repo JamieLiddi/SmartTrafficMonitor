@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
@@ -23,7 +25,7 @@ namespace SmartTrafficMonitor.Controllers
         {
             var scenario = new EventImpactScenario();
 
-            // Default Date: use latest DB timestamp so baseline window isn't empty
+            // 1) Default Date: use latest DB timestamp so baseline window isn't empty
             var latestUtc = _context.TrafficDatas
                 .AsNoTracking()
                 .OrderByDescending(t => t.Timestamp)
@@ -35,7 +37,7 @@ namespace SmartTrafficMonitor.Controllers
                 scenario.Date = latestUtc.Value.ToLocalTime().Date;
             }
 
-            // Optional prefill from querystring
+            // 2) Optional prefill from querystring
             if (!string.IsNullOrWhiteSpace(zone))
                 scenario.Zone = zone;
 
@@ -45,6 +47,12 @@ namespace SmartTrafficMonitor.Controllers
             if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var parsedDate))
                 scenario.Date = parsedDate.Date;
 
+            // ✅ Sensor overrides zone (matches UI/help text)
+            if (!string.IsNullOrWhiteSpace(scenario.SensorId) && scenario.SensorId != "All")
+            {
+                scenario.Zone = "All";
+            }
+
             var vm = BuildVm(scenario);
             return View(vm);
         }
@@ -53,6 +61,12 @@ namespace SmartTrafficMonitor.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Index(EventImpactScenario scenario)
         {
+            // ✅ Sensor overrides zone (matches UI/help text)
+            if (!string.IsNullOrWhiteSpace(scenario.SensorId) && scenario.SensorId != "All")
+            {
+                scenario.Zone = "All";
+            }
+
             var vm = BuildVm(scenario);
 
             if (!ModelState.IsValid)
@@ -60,16 +74,120 @@ namespace SmartTrafficMonitor.Controllers
 
             vm.Results = _service.ProjectHourly(scenario);
 
-            vm.TotalBaseline = vm.Results.Sum(x => x.Baseline);
-            vm.TotalProjected = vm.Results.Sum(x => x.Projected);
+            // ✅ Totals should match the wording "scenario window"
+            var windowRows = vm.Results.Where(x => x.IsImpacted).ToList();
+
+            // Safety fallback: if the window selects nothing, use full day
+            if (windowRows.Count == 0)
+                windowRows = vm.Results;
+
+            vm.TotalBaseline = windowRows.Sum(x => x.Baseline);
+            vm.TotalProjected = windowRows.Sum(x => x.Projected);
             vm.Delta = vm.TotalProjected - vm.TotalBaseline;
+
+            // Percent change (avoid divide-by-zero)
+            vm.PercentChange = vm.TotalBaseline == 0
+                ? 0
+                : (vm.Delta / vm.TotalBaseline) * 100.0;
 
             return View(vm);
         }
 
+        // ✅ Export CSV endpoint used by: /EventImpact/ExportCsv?...querystring...
+        [HttpGet]
+        public IActionResult ExportCsv(
+            string? zone,
+            string? sensor,
+            string? date,
+            string? overrideDayOfWeek,
+            ProjectionMovement movement,
+            int lookbackWeeks = 12,
+            double uncertaintyPercent = 15,
+            bool hasEvent = false,
+            double eventUpliftPercent = 0,
+            bool hasVuImpact = false,
+            double vuUpliftPercent = 0,
+            int startHour = 12,
+            int durationHours = 6
+        )
+        {
+            // ✅ FIX: OverrideDayOfWeek is DayOfWeek? (NOT string)
+            DayOfWeek? parsedDow = null;
+            if (!string.IsNullOrWhiteSpace(overrideDayOfWeek) &&
+                Enum.TryParse<DayOfWeek>(overrideDayOfWeek, true, out var dow))
+            {
+                parsedDow = dow;
+            }
+
+            var scenario = new EventImpactScenario
+            {
+                Zone = string.IsNullOrWhiteSpace(zone) ? "All" : zone,
+                SensorId = string.IsNullOrWhiteSpace(sensor) ? "All" : sensor,
+                Movement = movement,
+                LookbackWeeks = lookbackWeeks,
+                UncertaintyPercent = uncertaintyPercent,
+                HasEvent = hasEvent,
+                EventUpliftPercent = eventUpliftPercent,
+                HasVuImpact = hasVuImpact,
+                VuUpliftPercent = vuUpliftPercent,
+                StartHour = startHour,
+                DurationHours = durationHours,
+                OverrideDayOfWeek = parsedDow
+            };
+
+            // ✅ Sensor overrides zone (keep consistent everywhere)
+            if (!string.IsNullOrWhiteSpace(scenario.SensorId) && scenario.SensorId != "All")
+                scenario.Zone = "All";
+
+            // Parse date if provided, otherwise use latest DB timestamp date
+            if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var parsed))
+            {
+                scenario.Date = parsed.Date;
+            }
+            else
+            {
+                var latestUtc = _context.TrafficDatas
+                    .AsNoTracking()
+                    .OrderByDescending(t => t.Timestamp)
+                    .Select(t => (DateTime?)t.Timestamp)
+                    .FirstOrDefault();
+
+                scenario.Date = latestUtc.HasValue ? latestUtc.Value.ToLocalTime().Date : DateTime.Today;
+            }
+
+            var results = _service.ProjectHourly(scenario);
+
+            // Build CSV (UTF-8 with BOM for Excel friendliness)
+            var sb = new StringBuilder();
+            sb.AppendLine("Hour,Baseline,Projected,Delta,Lower,Upper,InWindow");
+
+            foreach (var r in results.OrderBy(x => x.Hour))
+            {
+                var delta = r.Projected - r.Baseline;
+
+                sb.Append(r.Hour).Append(',')
+                  .Append(r.Baseline.ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(r.Projected.ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(delta.ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(r.Lower.ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(r.Upper.ToString(CultureInfo.InvariantCulture)).Append(',')
+                  .Append(r.IsImpacted ? "Yes" : "No")
+                  .AppendLine();
+            }
+
+            // UTF8 BOM so Excel opens it cleanly
+            var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+
+            var safeZone = (scenario.Zone ?? "All").Replace(" ", "-");
+            var safeSensor = (scenario.SensorId ?? "All").Replace(" ", "-");
+            var fileName = $"event-impact_{scenario.Date:yyyyMMdd}_{scenario.Movement}_{safeZone}_{safeSensor}.csv";
+
+            return File(bytes, "text/csv", fileName);
+        }
+
         private EventImpactViewModel BuildVm(EventImpactScenario scenario)
         {
-            // Zones dropdown (only zones that actually exist in SensorLocations)
+            // Zones dropdown (only zones that exist in SensorLocations)
             var zones = _context.SensorLocations.AsNoTracking()
                 .Where(z => z.Zone != null && z.Zone != "")
                 .Select(z => z.Zone!)
@@ -82,38 +200,22 @@ namespace SmartTrafficMonitor.Controllers
             if (string.IsNullOrWhiteSpace(scenario.Zone) || !zones.Contains(scenario.Zone))
                 scenario.Zone = "All";
 
-            // ✅ Sensors dropdown from TrafficDatas (COMPLETE LIST ALWAYS)
-            var allSensors = _context.TrafficDatas.AsNoTracking()
+            // Sensors dropdown ALWAYS from TrafficDatas (complete list)
+            var sensors = _context.TrafficDatas.AsNoTracking()
                 .Select(t => t.SensorId)
                 .Where(id => id != null && id != "")
                 .Distinct()
                 .OrderBy(id => id)
                 .ToList();
 
-            // If Zone != All, TRY to filter sensors by zone using SensorLocations.
-            // If SensorLocations is incomplete (common), fall back to all sensors so UI never looks empty/limited.
-            var sensors = allSensors;
-
-            if (!string.IsNullOrWhiteSpace(scenario.Zone) && scenario.Zone != "All")
-            {
-                var zoneSensors = (from t in _context.TrafficDatas.AsNoTracking()
-                                   join sl in _context.SensorLocations.AsNoTracking()
-                                       on t.SensorId equals sl.SensorSlug
-                                   where sl.Zone == scenario.Zone
-                                   select t.SensorId)
-                                  .Where(id => id != null && id != "")
-                                  .Distinct()
-                                  .OrderBy(id => id)
-                                  .ToList();
-
-                if (zoneSensors.Count > 0)
-                    sensors = zoneSensors;
-            }
-
             sensors.Insert(0, "All");
 
             if (string.IsNullOrWhiteSpace(scenario.SensorId) || !sensors.Contains(scenario.SensorId))
                 scenario.SensorId = "All";
+
+            // ✅ If a sensor is selected, force Zone to All so the UI/controller stay consistent
+            if (!string.IsNullOrWhiteSpace(scenario.SensorId) && scenario.SensorId != "All")
+                scenario.Zone = "All";
 
             return new EventImpactViewModel
             {
