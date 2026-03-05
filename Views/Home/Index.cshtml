@@ -48,7 +48,7 @@
         return string.Join(" ", parts);
     }
 
-    // Heatmap defaults
+    // Heatmap defaults (driven by filter model so it persists)
     var heatmapZone = string.IsNullOrWhiteSpace(f.Zone) ? "Footscray Park" : f.Zone;
     var heatmapPeriod = string.IsNullOrWhiteSpace(f.HeatmapPeriod) ? "Weekly" : f.HeatmapPeriod;
 
@@ -197,7 +197,7 @@
                 </div>
 
                 <div class="col-md-6" style="padding-top: 6px;">
-                    <a class="btn btn-primary stm-primary-btn" style="width:100%;"
+                    <a id="eventImpactLink" class="btn btn-primary stm-primary-btn" style="width:100%;"
                        href="@buildEventImpactHref()">
                         Open Event Impact Simulator
                     </a>
@@ -212,6 +212,10 @@
         <div class="panel-body compact-filters">
             <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
                 <input type="hidden" name="Page" value="1" />
+
+                <!-- ✅ NEW: persist Heatmap selection through filter submits -->
+                <input type="hidden" id="Zone" name="Zone" value="@heatmapZone" />
+                <input type="hidden" id="HeatmapPeriodHidden" name="HeatmapPeriod" value="@heatmapPeriod" />
 
                 <div class="row">
                     <!-- ✅ Sensor dropdown -->
@@ -371,6 +375,10 @@
                     <input type="hidden" name="FootTrafficCount" value="@(f.FootTrafficCount?.ToString() ?? "")" />
                     <input type="hidden" name="VehicleCount" value="@(f.VehicleCount?.ToString() ?? "")" />
 
+                    <!-- ✅ NEW: include Heatmap selection in exports too -->
+                    <input type="hidden" name="Zone" value="@heatmapZone" />
+                    <input type="hidden" name="HeatmapPeriod" value="@heatmapPeriod" />
+
                     <select id="ExportFormat" name="ExportFormat" class="form-control stm-export-select">
                         <option value="csv">csv</option>
                         <option value="pdf">pdf</option>
@@ -454,7 +462,9 @@
                                    asp-route-PublicTransportRef="@f.PublicTransportRef"
                                    asp-route-VUScheduleRef="@f.VUScheduleRef"
                                    asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount">prev</a>
+                                   asp-route-VehicleCount="@f.VehicleCount"
+                                   asp-route-Zone="@heatmapZone"
+                                   asp-route-HeatmapPeriod="@heatmapPeriod">prev</a>
                             </li>
 
                             <li class="@(current == 1 ? "active" : "")">
@@ -471,7 +481,9 @@
                                    asp-route-PublicTransportRef="@f.PublicTransportRef"
                                    asp-route-VUScheduleRef="@f.VUScheduleRef"
                                    asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount">1</a>
+                                   asp-route-VehicleCount="@f.VehicleCount"
+                                   asp-route-Zone="@heatmapZone"
+                                   asp-route-HeatmapPeriod="@heatmapPeriod">1</a>
                             </li>
 
                             @if (start > 2)
@@ -497,7 +509,9 @@
                                        asp-route-PublicTransportRef="@f.PublicTransportRef"
                                        asp-route-VUScheduleRef="@f.VUScheduleRef"
                                        asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                       asp-route-VehicleCount="@f.VehicleCount">@p</a>
+                                       asp-route-VehicleCount="@f.VehicleCount"
+                                       asp-route-Zone="@heatmapZone"
+                                       asp-route-HeatmapPeriod="@heatmapPeriod">@p</a>
                                 </li>
                             }
 
@@ -522,7 +536,9 @@
                                        asp-route-PublicTransportRef="@f.PublicTransportRef"
                                        asp-route-VUScheduleRef="@f.VUScheduleRef"
                                        asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                       asp-route-VehicleCount="@f.VehicleCount">@totalPages</a>
+                                       asp-route-VehicleCount="@f.VehicleCount"
+                                       asp-route-Zone="@heatmapZone"
+                                       asp-route-HeatmapPeriod="@heatmapPeriod">@totalPages</a>
                                 </li>
                             }
 
@@ -540,7 +556,9 @@
                                    asp-route-PublicTransportRef="@f.PublicTransportRef"
                                    asp-route-VUScheduleRef="@f.VUScheduleRef"
                                    asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount">next</a>
+                                   asp-route-VehicleCount="@f.VehicleCount"
+                                   asp-route-Zone="@heatmapZone"
+                                   asp-route-HeatmapPeriod="@heatmapPeriod">next</a>
                             </li>
                         </ul>
                     </nav>
@@ -578,3 +596,85 @@
     </div>
 
 </div>
+
+<script>
+    (function () {
+        const heatmapForm = document.getElementById('heatmapForm');
+        const zoneSelect = document.getElementById('HeatmapZone');
+        const periodSelect = document.getElementById('HeatmapPeriod');
+        const frame = document.getElementById('heatmapFrame');
+        const zoneHidden = document.getElementById('Zone');
+        const periodHidden = document.getElementById('HeatmapPeriodHidden');
+        const eventImpactLink = document.getElementById('eventImpactLink');
+
+        if (!heatmapForm || !zoneSelect || !periodSelect || !frame) return;
+
+        function getVal(id) {
+            const el = document.getElementById(id);
+            return el ? (el.value || '').trim() : '';
+        }
+
+        function append(qs, key, value) {
+            if (!value) return;
+            qs.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+        }
+
+        function buildHeatmapUrl() {
+            const base = heatmapForm.getAttribute('data-heatmap-base') || '/Heatmap/View';
+            const zone = (zoneSelect.value || '').trim();
+            const period = (periodSelect.value || '').trim();
+
+            const qs = [];
+            append(qs, 'zone', zone);
+            append(qs, 'period', period);
+            append(qs, 'HeatmapPeriod', period);
+
+            // carry across current filter form values (so heatmap matches table window)
+            append(qs, 'SensorId', getVal('SensorId'));
+            append(qs, 'From', getVal('From'));
+            append(qs, 'To', getVal('To'));
+            append(qs, 'MovementType', getVal('MovementType'));
+            append(qs, 'Direction', getVal('Direction'));
+            append(qs, 'Season', getVal('Season'));
+            append(qs, 'PublicTransportRef', getVal('PublicTransportRef'));
+            append(qs, 'VUScheduleRef', getVal('VUScheduleRef'));
+            append(qs, 'FootTrafficCount', getVal('FootTrafficCount'));
+            append(qs, 'VehicleCount', getVal('VehicleCount'));
+
+            return base + '?' + qs.join('&');
+        }
+
+        function syncHiddenState() {
+            const zone = (zoneSelect.value || '').trim();
+            const period = (periodSelect.value || '').trim();
+            if (zoneHidden) zoneHidden.value = zone;
+            if (periodHidden) periodHidden.value = period;
+        }
+
+        function syncEventImpactLink() {
+            if (!eventImpactLink) return;
+            const zone = (zoneSelect.value || '').trim();
+            const date = new Date();
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const qs = [];
+            append(qs, 'zone', zone);
+            append(qs, 'date', `${yyyy}-${mm}-${dd}`);
+            eventImpactLink.href = '/EventImpact?' + qs.join('&');
+        }
+
+        heatmapForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            syncHiddenState();
+            syncEventImpactLink();
+            frame.src = buildHeatmapUrl();
+        });
+
+        zoneSelect.addEventListener('change', function () { syncHiddenState(); syncEventImpactLink(); });
+        periodSelect.addEventListener('change', function () { syncHiddenState(); syncEventImpactLink(); });
+
+        syncHiddenState();
+        syncEventImpactLink();
+    })();
+</script>

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartTrafficMonitor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34fc3ba42634310ee35f797c2981e344d1312d50")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b71fb3105e69ebc1b98c36ead8901653a1e5b661")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartTrafficMonitor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartTrafficMonitor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

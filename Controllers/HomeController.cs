@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SmartTrafficMonitor.Models;
@@ -23,12 +22,15 @@ namespace SmartTrafficMonitor.Controllers
 
         public IActionResult Index([FromQuery] TrafficFilterModel filters)
         {
-            filters = filters ?? new TrafficFilterModel();
+            filters ??= new TrafficFilterModel();
 
-            if (!string.IsNullOrWhiteSpace(filters.SensorId))
-                filters.SensorId = filters.SensorId.Trim();
-            else
-                filters.SensorId = null;
+            // ✅ Normalize string filters (trim + empty => null)
+            static string? Norm(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+            filters.SensorId = Norm(filters.SensorId);
+            filters.MovementType = Norm(filters.MovementType);
+            filters.Direction = Norm(filters.Direction);
+            filters.Season = Norm(filters.Season);
 
             if (filters.Page <= 0)
                 filters.Page = 1;
@@ -38,6 +40,7 @@ namespace SmartTrafficMonitor.Controllers
 
             var hasAnyQueryFilters = Request?.Query != null && Request.Query.Count > 0;
 
+            // Default window: last 7 days anchored at latest DB timestamp
             if (!hasAnyQueryFilters)
             {
                 var latestTs = _context.TrafficDatas
@@ -70,18 +73,21 @@ namespace SmartTrafficMonitor.Controllers
                 };
             }
 
+            // ✅ Sensor dropdown values (from TrafficDatas so it matches real data)
             var sensors = _context.TrafficDatas
+                .AsQueryable()
                 .Select(t => t.SensorId)
                 .Where(id => id != null && id != "")
                 .Distinct()
                 .OrderBy(id => id)
                 .ToList();
 
+            // Insert blank option so UI can show "(any)"
             sensors.Insert(0, "");
 
             // ✅ KPIs
             long kpiTotalFoot = 0;
-            long kpiTotalCyclists = 0;   // ✅ NEW
+            long kpiTotalCyclists = 0;
             long kpiTotalVeh = 0;
             long kpiRecordCount = 0;
             string kpiBusiestSensor = "—";
@@ -89,11 +95,11 @@ namespace SmartTrafficMonitor.Controllers
 
             try
             {
-                // Records = same filters as the table
+                // Records = same filters as the table (including MovementType if user set it)
                 var tableQuery = DataService.GetFilteredQuery(_context, filters);
                 kpiRecordCount = tableQuery.LongCount();
 
-                // Base KPI filters ignore MovementType (so KPIs don’t zero each other)
+                // Base KPI filters ignore MovementType so KPIs don’t zero each other out
                 var baseKpiFilters = new TrafficFilterModel
                 {
                     SensorId = filters.SensorId,
@@ -112,7 +118,7 @@ namespace SmartTrafficMonitor.Controllers
                     TimeStampEnd = filters.TimeStampEnd
                 };
 
-                var pedFilters = new TrafficFilterModel
+                TrafficFilterModel MakeTypeFilters(string movementType) => new TrafficFilterModel
                 {
                     SensorId = baseKpiFilters.SensorId,
                     From = baseKpiFilters.From,
@@ -128,55 +134,17 @@ namespace SmartTrafficMonitor.Controllers
                     TimeStamp = baseKpiFilters.TimeStamp,
                     TimeStampStart = baseKpiFilters.TimeStampStart,
                     TimeStampEnd = baseKpiFilters.TimeStampEnd,
-                    MovementType = "Pedestrian"
+                    MovementType = movementType
                 };
 
-                var cycFilters = new TrafficFilterModel
-                {
-                    SensorId = baseKpiFilters.SensorId,
-                    From = baseKpiFilters.From,
-                    To = baseKpiFilters.To,
-                    Direction = baseKpiFilters.Direction,
-                    Season = baseKpiFilters.Season,
-                    PublicTransportRef = baseKpiFilters.PublicTransportRef,
-                    VUScheduleRef = baseKpiFilters.VUScheduleRef,
-                    FootTrafficCount = baseKpiFilters.FootTrafficCount,
-                    VehicleCount = baseKpiFilters.VehicleCount,
-                    Zone = baseKpiFilters.Zone,
-                    HeatmapPeriod = baseKpiFilters.HeatmapPeriod,
-                    TimeStamp = baseKpiFilters.TimeStamp,
-                    TimeStampStart = baseKpiFilters.TimeStampStart,
-                    TimeStampEnd = baseKpiFilters.TimeStampEnd,
-                    MovementType = "Cyclist"
-                };
-
-                var vehFilters = new TrafficFilterModel
-                {
-                    SensorId = baseKpiFilters.SensorId,
-                    From = baseKpiFilters.From,
-                    To = baseKpiFilters.To,
-                    Direction = baseKpiFilters.Direction,
-                    Season = baseKpiFilters.Season,
-                    PublicTransportRef = baseKpiFilters.PublicTransportRef,
-                    VUScheduleRef = baseKpiFilters.VUScheduleRef,
-                    FootTrafficCount = baseKpiFilters.FootTrafficCount,
-                    VehicleCount = baseKpiFilters.VehicleCount,
-                    Zone = baseKpiFilters.Zone,
-                    HeatmapPeriod = baseKpiFilters.HeatmapPeriod,
-                    TimeStamp = baseKpiFilters.TimeStamp,
-                    TimeStampStart = baseKpiFilters.TimeStampStart,
-                    TimeStampEnd = baseKpiFilters.TimeStampEnd,
-                    MovementType = "Vehicle"
-                };
-
-                var pedQuery = DataService.GetFilteredQuery(_context, pedFilters);
-                var cycQuery = DataService.GetFilteredQuery(_context, cycFilters);
-                var vehQuery = DataService.GetFilteredQuery(_context, vehFilters);
+                var pedQuery = DataService.GetFilteredQuery(_context, MakeTypeFilters("Pedestrian"));
+                var cycQuery = DataService.GetFilteredQuery(_context, MakeTypeFilters("Cyclist"));
+                var vehQuery = DataService.GetFilteredQuery(_context, MakeTypeFilters("Vehicle"));
 
                 // ✅ Pedestrians: FootTrafficCount on Pedestrian rows
                 kpiTotalFoot = pedQuery.Select(x => (long)x.FootTrafficCount).Sum();
 
-                // ✅ Cyclists: FootTrafficCount on Cyclist rows (matches your DB reality)
+                // ✅ Cyclists: FootTrafficCount on Cyclist rows (matches your DB structure)
                 kpiTotalCyclists = cycQuery.Select(x => (long)x.FootTrafficCount).Sum();
 
                 // ✅ Vehicles: VehicleCount on Vehicle rows
@@ -217,6 +185,7 @@ namespace SmartTrafficMonitor.Controllers
             }
             catch (Exception ex)
             {
+                // KPI failure should never break the page
                 _logger.LogError(ex, "Error computing KPI values");
             }
 
@@ -234,7 +203,7 @@ namespace SmartTrafficMonitor.Controllers
 
                 // KPIs
                 KpiTotalFootTraffic = kpiTotalFoot,
-                KpiTotalCyclists = kpiTotalCyclists,   // ✅ NEW
+                KpiTotalCyclists = kpiTotalCyclists,
                 KpiTotalVehicles = kpiTotalVeh,
                 KpiRecordCount = kpiRecordCount,
                 KpiBusiestSensor = kpiBusiestSensor,
@@ -244,6 +213,7 @@ namespace SmartTrafficMonitor.Controllers
                 FallbackMessage = ""
             };
 
+            // Fallback: if user chose a window with no results, show last-known data
             if (vm.Results != null && vm.Results.Count == 0 && filters.From.HasValue && filters.To.HasValue)
             {
                 try
