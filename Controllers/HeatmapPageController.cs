@@ -61,7 +61,8 @@ namespace SmartTrafficMonitor.Controllers
                 centerLng = 144.9015;
             }
 
-            // Zone-based sensor filter (so VU doesn't show Footscray sensors)
+            // ✅ IMPORTANT: Zone-based sensor filter (so VU doesn't show Footscray sensors)
+            // Assumes SensorLocations.Zone stores something like "Footscray Park" or "VU Campus"
             var zoneSensorSlugs = _context.SensorLocations
                 .AsNoTracking()
                 .Where(l => l.Zone == safeZone)
@@ -81,6 +82,7 @@ namespace SmartTrafficMonitor.Controllers
             // If we have zone sensors, filter the window query to that zone’s sensors only
             if (zoneSensorSlugSet.Count > 0)
             {
+                // Prefer exact match on stored slug if possible:
                 var zoneRawSlugs = zoneSensorSlugs
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .Select(s => s.Trim())
@@ -89,25 +91,15 @@ namespace SmartTrafficMonitor.Controllers
                 windowQuery = windowQuery.Where(t => zoneRawSlugs.Contains(t.SensorId));
             }
 
-            // ✅ AGGREGATE BY SENSOR (top 50) WITH SPLITS
+            // AGGREGATE BY SENSOR (top 50)
             var sensorAgg = windowQuery
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
                 {
                     SensorId = g.Key,
-                    Pedestrians = g.Sum(x => x.FootTrafficCount),
-                    Cyclists = g.Sum(x => x.CyclistCount),
-                    Vehicles = g.Sum(x => x.VehicleCount)
+                    Weight = g.Sum(x => (x.FootTrafficCount + x.VehicleCount))
                 })
-                .Select(x => new
-                {
-                    x.SensorId,
-                    x.Pedestrians,
-                    x.Cyclists,
-                    x.Vehicles,
-                    Total = x.Pedestrians + x.Cyclists + x.Vehicles
-                })
-                .OrderByDescending(x => x.Total)
+                .OrderByDescending(x => x.Weight)
                 .Take(50)
                 .ToList();
 
@@ -115,15 +107,14 @@ namespace SmartTrafficMonitor.Controllers
             var sensorSlugs = sensorAgg.Select(x => x.SensorId).ToList();
             var sensorSlugNormSet = sensorSlugs.Select(NormSlug).ToHashSet();
 
-            // Note: Keeping your in-memory normalize filter (works fine for 11 rows)
             var locationsNorm = _context.SensorLocations
                 .AsNoTracking()
                 .ToList()
                 .Where(l => sensorSlugNormSet.Contains(NormSlug(l.SensorSlug)))
                 .ToDictionary(l => NormSlug(l.SensorSlug), l => l);
 
-            // ✅ Dynamic scaling: intensity relative to maxTotal
-            var maxTotal = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Total) : 0;
+            // Dynamic scaling: intensity relative to maxWeight
+            var maxWeight = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Weight) : 0;
 
             var heatPoints = new List<double[]>();
             var markers = new List<object>();
@@ -158,21 +149,17 @@ namespace SmartTrafficMonitor.Controllers
                     usedFallbackCoords++;
                 }
 
-                var intensity = maxTotal <= 0 ? 0.0 : (double)s.Total / maxTotal;
+                var intensity = maxWeight <= 0 ? 0.0 : (double)s.Weight / maxWeight;
                 intensity = Math.Clamp(intensity, 0.05, 1.0);
 
                 heatPoints.Add(new[] { lat, lng, intensity });
 
-                // ✅ Markers now include split totals for tooltip
                 markers.Add(new
                 {
                     slug = s.SensorId ?? "",
                     lat,
                     lng,
-                    pedestrians = s.Pedestrians,
-                    cyclists = s.Cyclists,
-                    vehicles = s.Vehicles,
-                    total = s.Total
+                    weight = s.Weight
                 });
             }
 
@@ -185,11 +172,11 @@ namespace SmartTrafficMonitor.Controllers
                 heatPoints.Add(new[] { centerLat + 0.0001, centerLng - 0.0007, 0.65 });
 
                 markers.Clear();
-                markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, pedestrians = 300, cyclists = 50, vehicles = 450, total = 800 });
-                markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, pedestrians = 250, cyclists = 30, vehicles = 320, total = 600 });
-                markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, pedestrians = 280, cyclists = 40, vehicles = 380, total = 700 });
-                markers.Add(new { slug = "demo-d", lat = centerLat - 0.0007, lng = centerLng + 0.0001, pedestrians = 200, cyclists = 25, vehicles = 275, total = 500 });
-                markers.Add(new { slug = "demo-e", lat = centerLat + 0.0001, lng = centerLng - 0.0007, pedestrians = 240, cyclists = 35, vehicles = 375, total = 650 });
+                markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, weight = 800 });
+                markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, weight = 600 });
+                markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, weight = 700 });
+                markers.Add(new { slug = "demo-d", lat = centerLat - 0.0007, lng = centerLng + 0.0001, weight = 500 });
+                markers.Add(new { slug = "demo-e", lat = centerLat + 0.0001, lng = centerLng - 0.0007, weight = 650 });
 
                 usedRealCoords = 0;
                 usedFallbackCoords = markers.Count;
@@ -218,7 +205,7 @@ namespace SmartTrafficMonitor.Controllers
             ViewData["MidCount"] = mid;
             ViewData["HighCount"] = high;
 
-            // Debug numbers
+            // ✅ Debug numbers
             ViewData["RealCoordsCount"] = usedRealCoords;
             ViewData["FallbackCoordsCount"] = usedFallbackCoords;
             ViewData["ZoneSensorsCount"] = zoneSensorSlugSet.Count;
