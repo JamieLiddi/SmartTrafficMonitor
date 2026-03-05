@@ -224,6 +224,12 @@ namespace SmartTrafficMonitor.Services
     // data access service
     public static class DataService
     {
+        // ✅ NEW: lets controllers reuse the exact same filtering query (for KPIs, charts, etc.)
+        public static IQueryable<TrafficData> GetFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
+        {
+            return BuildFilteredQuery(context, filters);
+        }
+
         // full filtered list
         public static List<TrafficData> GetFilteredData(ApplicationDbContext context, TrafficFilterModel? filters)
         {
@@ -270,7 +276,8 @@ namespace SmartTrafficMonitor.Services
         // Shared filtering logic
         private static IQueryable<TrafficData> BuildFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
         {
-            var q = context.TrafficDatas.AsQueryable();
+            // ✅ AsNoTracking: faster for dashboard reads
+            var q = context.TrafficDatas.AsNoTracking().AsQueryable();
 
             if (filters == null)
                 return q;

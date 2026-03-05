@@ -103,6 +103,41 @@
         }
     </div>
 
+    <!-- ✅ KPI CARDS -->
+    <div class="stm-kpi-grid" style="margin-bottom:14px;">
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Pedestrians</div>
+            <div class="stm-kpi-value">@((Model?.KpiTotalFootTraffic ?? 0).ToString("N0"))</div>
+            <div class="stm-kpi-sub">@((Model?.KpiRecordCount ?? 0).ToString("N0")) records</div>
+        </div>
+
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Cyclists</div>
+            <div class="stm-kpi-value">@((Model?.KpiTotalCyclists ?? 0).ToString("N0"))</div>
+            <div class="stm-kpi-sub">Filtered total</div>
+        </div>
+
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Vehicles</div>
+            <div class="stm-kpi-value">@((Model?.KpiTotalVehicles ?? 0).ToString("N0"))</div>
+            <div class="stm-kpi-sub">Filtered total</div>
+        </div>
+
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Busiest Sensor</div>
+            <div class="stm-kpi-value" style="font-size:16px; font-weight:800; line-height:1.2;">
+                @prettySensor(Model?.KpiBusiestSensor ?? "")
+            </div>
+            <div class="stm-kpi-sub">Highest combined volume</div>
+        </div>
+
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Peak Hour</div>
+            <div class="stm-kpi-value">@((Model?.KpiPeakHour ?? "—"))</div>
+            <div class="stm-kpi-sub">Highest combined volume</div>
+        </div>
+    </div>
+
     <!-- Heatmap -->
     <div class="panel panel-default stm-card">
         <div class="panel-heading"><strong>Heatmap</strong></div>
@@ -370,12 +405,12 @@
                                 {
                                     <tr>
                                         <td title="@r.SensorId">@prettySensor(r.SensorId)</td>
-                                        <td class="cell-mono">@r.Timestamp</td>
+                                        <td class="cell-mono">@r.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
                                         <td>@r.MovementType</td>
                                         <td>@r.Direction</td>
                                         <td>@r.Season</td>
-                                        <td class="cell-mono">@r.FootTrafficCount</td>
-                                        <td class="cell-mono">@r.VehicleCount</td>
+                                        <td class="cell-mono">@r.FootTrafficCount.ToString("N0")</td>
+                                        <td class="cell-mono">@r.VehicleCount.ToString("N0")</td>
                                         <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
                                         <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
                                     </tr>
