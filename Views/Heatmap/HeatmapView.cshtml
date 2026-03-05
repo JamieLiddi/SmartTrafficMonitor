@@ -26,7 +26,6 @@
         html, body { height: 100%; margin: 0; }
         #map { height: 100vh; width: 100%; }
 
-        /* Dark UI overlay to match dashboard */
         .hud {
             position: absolute;
             top: 10px;
@@ -81,17 +80,12 @@
             border-radius: 999px;
             display: inline-block;
         }
-        .dot.low { background: #2D6CDF; }   /* blue */
-        .dot.mid { background: #8B5CF6; }   /* purple */
-        .dot.high { background: #F59E0B; }  /* orange */
+        .dot.low { background: #2D6CDF; }
+        .dot.mid { background: #8B5CF6; }
+        .dot.high { background: #F59E0B; }
 
-        /* ✅ NEW: marker toggle */
-        .toggle {
-            cursor: pointer;
-            user-select: none;
-        }
+        .toggle { cursor: pointer; user-select: none; }
 
-        /* ✅ NEW: tooltip styling to match UI */
         .leaflet-tooltip.stm-tip {
             background: rgba(15, 26, 46, 0.92);
             color: #fff;
@@ -103,8 +97,11 @@
         }
         .leaflet-tooltip.stm-tip:before { border-top-color: rgba(15, 26, 46, 0.92); }
 
-        /* ✅ NEW: small label inside tooltip */
         .tip-muted { color: rgba(255,255,255,0.75); font-size: 11px; }
+
+        .tip-row { display:flex; justify-content:space-between; gap:12px; }
+        .tip-row span { white-space:nowrap; }
+        .tip-total { margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.12); font-weight:700; }
     </style>
 </head>
 <body>
@@ -135,7 +132,6 @@
         const heatPoints = @Html.Raw(pointsJson);
         const markers = @Html.Raw(markersJson);
 
-        // update HUD points count if needed
         document.getElementById("pointsCount").textContent = Array.isArray(heatPoints) ? heatPoints.length : 0;
 
         const map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 15);
@@ -145,14 +141,12 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Heat layer (leaflet.heat expects [lat, lng, intensity?])
         L.heatLayer(heatPoints, {
             radius: 30,
             blur: 22,
             maxZoom: 17
         }).addTo(map);
 
-        // ✅ NEW: sensor markers layer
         const markerLayer = L.layerGroup().addTo(map);
 
         function prettySensor(slug) {
@@ -175,23 +169,54 @@
                 .join(" ");
         }
 
+        function num(v) {
+            const x = Number(v);
+            return isFinite(x) ? x : 0;
+        }
+
+        function fmt(v) {
+            const x = Number(v);
+            return isFinite(x) ? x.toLocaleString() : "—";
+        }
+
         function addMarkers() {
             markerLayer.clearLayers();
             if (!Array.isArray(markers)) return;
 
             markers.forEach(m => {
                 if (!m) return;
+
                 const lat = Number(m.lat);
                 const lng = Number(m.lng);
                 if (!isFinite(lat) || !isFinite(lng)) return;
 
-                const name = prettySensor(m.slug);
-                const weight = Number(m.weight);
-                const weightText = isFinite(weight) ? weight.toLocaleString() : "—";
+                const name = prettySensor(m.slug) || (m.slug || "sensor");
 
-                const html =
-                    `<div><strong>${name || (m.slug || "sensor")}</strong><br/>` +
-                    `<span class="tip-muted">Weight: ${weightText}</span></div>`;
+                const hasDetailed =
+                    ("pedestrians" in m) || ("cyclists" in m) || ("vehicles" in m) || ("total" in m);
+
+                let html = `<div><strong>${name}</strong>`;
+
+                if (hasDetailed) {
+                    const ped = fmt(m.pedestrians);
+                    const cyc = fmt(m.cyclists);
+                    const veh = fmt(m.vehicles);
+
+                    const totalVal = ("total" in m) ? num(m.total) : (num(m.pedestrians) + num(m.cyclists) + num(m.vehicles));
+                    const total = totalVal.toLocaleString();
+
+                    html +=
+                        `<div class="tip-row"><span>Pedestrians</span><span>${ped}</span></div>` +
+                        `<div class="tip-row"><span>Cyclists</span><span>${cyc}</span></div>` +
+                        `<div class="tip-row"><span>Vehicles</span><span>${veh}</span></div>` +
+                        `<div class="tip-total tip-row"><span>Total</span><span>${total}</span></div>`;
+                } else {
+                    const w = ("weight" in m) ? fmt(m.weight) : "—";
+                    html += `<div class="tip-row"><span>Weight</span><span>${w}</span></div>`;
+                }
+
+                html += `<div class="tip-muted" style="margin-top:6px;">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>`;
+                html += `</div>`;
 
                 L.circleMarker([lat, lng], {
                     radius: 6,
@@ -206,7 +231,6 @@
 
         addMarkers();
 
-        // ✅ NEW: toggle markers
         let markersOn = true;
         const toggleBtn = document.getElementById("toggleMarkers");
         const markersState = document.getElementById("markersState");
@@ -214,7 +238,6 @@
         toggleBtn.addEventListener("click", () => {
             markersOn = !markersOn;
             markersState.textContent = markersOn ? "on" : "off";
-
             if (markersOn) markerLayer.addTo(map);
             else map.removeLayer(markerLayer);
         });
