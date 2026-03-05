@@ -397,3 +397,45 @@ select.stm-export-select option[value=""] {
     padding-top: 70px;
   }
 }
+
+/* -----------------------------
+   FIX: Dark table striping (removes white gaps)
+------------------------------ */
+
+.stm-table,
+.results-table {
+  background: transparent !important;
+  color: #e9eefc;
+  border-collapse: collapse;
+}
+
+/* ensure cells never render white */
+.stm-table thead th,
+.stm-table tbody td,
+.results-table thead th,
+.results-table tbody td {
+  background: transparent !important;
+  color: #e9eefc !important;
+}
+
+/* override Bootstrap table-striped */
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(even) {
+  background: rgba(255,255,255,0.02) !important;
+}
+
+/* row hover */
+.table-striped > tbody > tr:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* keep borders subtle */
+.stm-table td,
+.stm-table th,
+.results-table td,
+.results-table th {
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+}

@@ -8,35 +8,33 @@
 
     string fmtDate(DateTime? dt)
     {
-        return dt.HasValue ? dt.Value.ToString("yyyy-MM-ddTHH:mm") : "";
+        if (!dt.HasValue) return "";
+        // datetime-local expects "yyyy-MM-ddTHH:mm"
+        return dt.Value.ToString("yyyy-MM-ddTHH:mm");
     }
 
-    bool hasAnyQueryFilters = Context.Request.Query != null && Context.Request.Query.Count > 0;
-
-    string boolToString(bool? v)
+    string boolToString(bool? b)
     {
-        if (!v.HasValue) return "";
-        return v.Value ? "true" : "false";
+        if (!b.HasValue) return "";
+        return b.Value ? "true" : "false";
     }
 
-    string prettySensor(string slug)
+    // Pretty sensor labels (slug -> Title Case)
+    string prettySensor(string? slug)
     {
-        if (string.IsNullOrWhiteSpace(slug)) return "";
+        if (string.IsNullOrWhiteSpace(slug)) return "—";
 
-        var parts = slug
-            .Trim()
-            .Replace("_", "-")
-            .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
-            .ToList();
+        // replace dash/underscore with space
+        var s = slug.Replace("-", " ").Replace("_", " ").Trim();
+        if (s.Length == 0) return "—";
 
-        for (int i = 0; i < parts.Count; i++)
+        // basic title-case with a few overrides
+        var parts = s.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToArray();
+        for (int i = 0; i < parts.Length; i++)
         {
             var w = parts[i].ToLowerInvariant();
-
             if (w == "st") parts[i] = "St";
-            else if (w == "stn") parts[i] = "Station";
             else if (w == "rd") parts[i] = "Rd";
-            else if (w == "ave") parts[i] = "Ave";
             else if (w == "mt") parts[i] = "Mt";
             else if (w == "vu") parts[i] = "VU";
             else
@@ -65,10 +63,7 @@
         if (f.From.HasValue) qs.Add("From=" + Uri.EscapeDataString(f.From.Value.ToString("o")));
         if (f.To.HasValue) qs.Add("To=" + Uri.EscapeDataString(f.To.Value.ToString("o")));
         if (!string.IsNullOrWhiteSpace(f.MovementType)) qs.Add("MovementType=" + Uri.EscapeDataString(f.MovementType));
-        if (!string.IsNullOrWhiteSpace(f.Direction)) qs.Add("Direction=" + Uri.EscapeDataString(f.Direction));
         if (!string.IsNullOrWhiteSpace(f.Season)) qs.Add("Season=" + Uri.EscapeDataString(f.Season));
-        if (f.PublicTransportRef.HasValue) qs.Add("PublicTransportRef=" + boolToString(f.PublicTransportRef));
-        if (f.VUScheduleRef.HasValue) qs.Add("VUScheduleRef=" + boolToString(f.VUScheduleRef));
         if (f.FootTrafficCount.HasValue) qs.Add("FootTrafficCount=" + f.FootTrafficCount.Value);
         if (f.VehicleCount.HasValue) qs.Add("VehicleCount=" + f.VehicleCount.Value);
 
@@ -84,6 +79,24 @@
         qs.Add("date=" + Uri.EscapeDataString(DateTime.Today.ToString("yyyy-MM-dd")));
 
         return "/EventImpact" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+    }
+
+    // -------- Pagination window logic (prevents huge number grid) --------
+    int currentPage = Model?.Page ?? 1;
+    int totalPages = Model?.TotalPages ?? 1;
+
+    int window = 4; // shows current +/- 4 (so up to 9 page numbers)
+    int startPage = Math.Max(1, currentPage - window);
+    int endPage = Math.Min(totalPages, currentPage + window);
+
+    // expand window if near edges
+    if (currentPage <= window)
+    {
+        endPage = Math.Min(totalPages, 1 + (window * 2));
+    }
+    if (currentPage + window > totalPages)
+    {
+        startPage = Math.Max(1, totalPages - (window * 2));
     }
 }
 
@@ -108,132 +121,98 @@
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Pedestrians</div>
             <div class="stm-kpi-value">@((Model?.KpiTotalFootTraffic ?? 0).ToString("N0"))</div>
-            <div class="stm-kpi-sub">@((Model?.KpiRecordCount ?? 0).ToString("N0")) records</div>
         </div>
-
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Cyclists</div>
             <div class="stm-kpi-value">@((Model?.KpiTotalCyclists ?? 0).ToString("N0"))</div>
-            <div class="stm-kpi-sub">Filtered total</div>
         </div>
-
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Vehicles</div>
             <div class="stm-kpi-value">@((Model?.KpiTotalVehicles ?? 0).ToString("N0"))</div>
-            <div class="stm-kpi-sub">Filtered total</div>
         </div>
-
+        <div class="stm-kpi-card">
+            <div class="stm-kpi-label">Records</div>
+            <div class="stm-kpi-value">@((Model?.KpiRecordCount ?? 0).ToString("N0"))</div>
+        </div>
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Busiest Sensor</div>
-            <div class="stm-kpi-value" style="font-size:16px; font-weight:800; line-height:1.2;">
-                @prettySensor(Model?.KpiBusiestSensor ?? "")
-            </div>
-            <div class="stm-kpi-sub">Highest combined volume</div>
+            <div class="stm-kpi-value" style="font-size:18px;">@(prettySensor(Model?.KpiBusiestSensor))</div>
         </div>
-
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Peak Hour</div>
-            <div class="stm-kpi-value">@((Model?.KpiPeakHour ?? "—"))</div>
-            <div class="stm-kpi-sub">Highest combined volume</div>
+            <div class="stm-kpi-value" style="font-size:18px;">@(Model?.KpiPeakHour ?? "—")</div>
         </div>
     </div>
 
-    <!-- Heatmap -->
+    <!-- Heatmap preview + event impact -->
     <div class="panel panel-default stm-card">
-        <div class="panel-heading"><strong>Heatmap</strong></div>
+        <div class="panel-heading stm-card-header">
+            <div class="stm-card-header-left">
+                <strong>Heatmap Preview</strong>
+                <span class="stm-subtle">@heatmapZone · @heatmapPeriod</span>
+            </div>
+            <div class="stm-card-header-right">
+                <a id="eventImpactLink" class="btn btn-primary stm-primary-btn" href="@buildEventImpactHref()">
+                    Open Event Impact Simulator
+                </a>
+            </div>
+        </div>
+
         <div class="panel-body">
-            <form id="heatmapForm" data-heatmap-base="/Heatmap/View">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="HeatmapZone">Select Zone</label>
-                        <select id="HeatmapZone" class="form-control">
-                            <option value="Footscray Park" selected="@(heatmapZone == "Footscray Park" ? "selected" : null)">Footscray Park</option>
-                            <option value="VU Campus" selected="@(heatmapZone == "VU Campus" ? "selected" : null)">VU Campus</option>
-                        </select>
-                    </div>
+            <form id="heatmapForm" class="row" data-heatmap-base="/Heatmap/View" style="margin-bottom:10px;">
+                <div class="col-md-4">
+                    <label for="HeatmapZone">Select Zone</label>
+                    <select id="HeatmapZone" name="Zone" class="form-control">
+                        <option value="VU Campus" selected="@(heatmapZone == "VU Campus" ? "selected" : null)">VU Campus</option>
+                        <option value="Footscray Park" selected="@(heatmapZone == "Footscray Park" ? "selected" : null)">Footscray Park</option>
+                        <option value="Footscray Market" selected="@(heatmapZone == "Footscray Market" ? "selected" : null)">Footscray Market</option>
+                        <option value="Nicholson St Mall" selected="@(heatmapZone == "Nicholson St Mall" ? "selected" : null)">Nicholson St Mall</option>
+                        <option value="Footscray Library" selected="@(heatmapZone == "Footscray Library" ? "selected" : null)">Footscray Library</option>
+                    </select>
+                </div>
 
-                    <div class="col-md-4">
-                        <label for="HeatmapPeriod">Select Time Period</label>
-                        <select id="HeatmapPeriod" class="form-control">
-                            <option value="Weekly" selected="@(heatmapPeriod == "Weekly" ? "selected" : null)">Weekly</option>
-                            <option value="Monthly" selected="@(heatmapPeriod == "Monthly" ? "selected" : null)">Monthly</option>
-                            <option value="Seasonal" selected="@(heatmapPeriod == "Seasonal" ? "selected" : null)">Seasonal</option>
-                        </select>
-                    </div>
+                <div class="col-md-4">
+                    <label for="HeatmapPeriod">Select Time Period</label>
+                    <select id="HeatmapPeriod" name="HeatmapPeriod" class="form-control">
+                        <option value="Weekly" selected="@(heatmapPeriod == "Weekly" ? "selected" : null)">Weekly</option>
+                        <option value="Monthly" selected="@(heatmapPeriod == "Monthly" ? "selected" : null)">Monthly</option>
+                        <option value="Seasonal" selected="@(heatmapPeriod == "Seasonal" ? "selected" : null)">Seasonal</option>
+                    </select>
+                </div>
 
-                    <div class="col-md-4" style="padding-top: 24px;">
-                        <button type="submit" class="btn btn-warning stm-primary-btn" style="width:100%;">Generate Heatmap</button>
-                    </div>
+                <div class="col-md-4" style="padding-top:24px;">
+                    <input type="hidden" id="Zone" name="Zone" value="@heatmapZone" />
+                    <input type="hidden" id="HeatmapPeriodHidden" name="HeatmapPeriod" value="@heatmapPeriod" />
+                    <button type="submit" class="btn btn-warning stm-accent-btn" style="width:100%;">Generate Heatmap</button>
                 </div>
             </form>
 
-            <div class="mt-4 stm-heatmap-preview" style="margin-top:15px;">
-                <h4 style="margin-top:0;">Heatmap Preview</h4>
-                <iframe id="heatmapFrame"
-                        src="@buildHeatmapSrc()"
-                        width="100%"
-                        height="500"
-                        class="stm-heatmap-frame"
-                        style="border:1px solid rgba(255,255,255,0.10);"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Event Impact Simulator -->
-    <div class="panel panel-default stm-card">
-        <div class="panel-heading"><strong>Event Impact Simulator</strong></div>
-        <div class="panel-body">
-            <p class="text-muted" style="margin-top:0;">
-                Run "what-if" scenarios (event day, day-of-week override, VU impact) and generate a projected hourly foot traffic profile.
-            </p>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="help-text">
-                        <strong>Default inputs:</strong><br />
-                        Zone: <span class="cell-mono">@heatmapZone</span><br />
-                        Date: <span class="cell-mono">@DateTime.Today.ToString("yyyy-MM-dd")</span>
-                    </div>
-                </div>
-
-                <div class="col-md-6" style="padding-top: 6px;">
-                    <a id="eventImpactLink" class="btn btn-primary stm-primary-btn" style="width:100%;"
-                       href="@buildEventImpactHref()">
-                        Open Event Impact Simulator
-                    </a>
-                </div>
-            </div>
+            <iframe id="heatmapFrame"
+                    src="@buildHeatmapSrc()"
+                    style="width: 100%; height: 520px; border: 0; border-radius: 12px; overflow: hidden;">
+            </iframe>
         </div>
     </div>
 
     <!-- filters -->
     <div class="panel panel-default stm-card">
-        <div class="panel-heading"><strong>Filters</strong></div>
-        <div class="panel-body compact-filters">
-            <form id="filterForm" method="get" action="@Url.Action("Index","Home")">
-                <input type="hidden" name="Page" value="1" />
+        <div class="panel-heading stm-card-header">
+            <div class="stm-card-header-left">
+                <strong>Filters</strong>
+            </div>
+        </div>
 
-                <!-- ✅ NEW: persist Heatmap selection through filter submits -->
-                <input type="hidden" id="Zone" name="Zone" value="@heatmapZone" />
-                <input type="hidden" id="HeatmapPeriodHidden" name="HeatmapPeriod" value="@heatmapPeriod" />
-
+        <div class="panel-body">
+            <form method="get" action="@Url.Action("Index","Home")">
                 <div class="row">
-                    <!-- ✅ Sensor dropdown -->
                     <div class="col-md-3">
                         <label for="SensorId">Sensor</label>
                         <select id="SensorId" name="SensorId" class="form-control">
                             <option value="" selected="@(string.IsNullOrWhiteSpace(f.SensorId) ? "selected" : null)">(any)</option>
-
-                            @if (Model?.AvailableSensors != null)
+                            @foreach (var s in (Model?.AvailableSensors ?? new List<string>()))
                             {
-                                foreach (var s in Model.AvailableSensors)
-                                {
-                                    if (string.IsNullOrWhiteSpace(s)) { continue; }
-
-                                    <option value="@s" selected="@(f.SensorId == s ? "selected" : null)">
-                                        @prettySensor(s)
-                                    </option>
-                                }
+                                if (string.IsNullOrWhiteSpace(s)) { continue; }
+                                <option value="@s" selected="@(f.SensorId == s ? "selected" : null)">@prettySensor(s)</option>
                             }
                         </select>
                         <div class="help-text">Pick a sensor to filter results.</div>
@@ -260,18 +239,8 @@
                     </div>
                 </div>
 
+                <!-- ✅ Direction / transport nearby / near VU schedule removed -->
                 <div class="row">
-                    <div class="col-md-3">
-                        <label for="Direction">direction</label>
-                        <select id="Direction" name="Direction" class="form-control">
-                            <option value="" selected="@(string.IsNullOrWhiteSpace(f.Direction) ? "selected" : null)">(any)</option>
-                            <option value="North" selected="@(f.Direction == "North" ? "selected" : null)">North</option>
-                            <option value="South" selected="@(f.Direction == "South" ? "selected" : null)">South</option>
-                            <option value="East" selected="@(f.Direction == "East" ? "selected" : null)">East</option>
-                            <option value="West" selected="@(f.Direction == "West" ? "selected" : null)">West</option>
-                        </select>
-                    </div>
-
                     <div class="col-md-3">
                         <label for="Season">season</label>
                         <select id="Season" name="Season" class="form-control">
@@ -280,24 +249,6 @@
                             <option value="Autumn" selected="@(f.Season == "Autumn" ? "selected" : null)">Autumn</option>
                             <option value="Winter" selected="@(f.Season == "Winter" ? "selected" : null)">Winter</option>
                             <option value="Spring" selected="@(f.Season == "Spring" ? "selected" : null)">Spring</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="PublicTransportRef">transport nearby</label>
-                        <select id="PublicTransportRef" name="PublicTransportRef" class="form-control">
-                            <option value="" selected="@(f.PublicTransportRef == null ? "selected" : null)">(any)</option>
-                            <option value="true" selected="@(f.PublicTransportRef == true ? "selected" : null)">Yes</option>
-                            <option value="false" selected="@(f.PublicTransportRef == false ? "selected" : null)">No</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label for="VUScheduleRef">near vu schedule</label>
-                        <select id="VUScheduleRef" name="VUScheduleRef" class="form-control">
-                            <option value="" selected="@(f.VUScheduleRef == null ? "selected" : null)">(any)</option>
-                            <option value="true" selected="@(f.VUScheduleRef == true ? "selected" : null)">Yes</option>
-                            <option value="false" selected="@(f.VUScheduleRef == false ? "selected" : null)">No</option>
                         </select>
                     </div>
                 </div>
@@ -368,14 +319,11 @@
                     <input type="hidden" name="From" value="@fmtDate(f.From)" />
                     <input type="hidden" name="To" value="@fmtDate(f.To)" />
                     <input type="hidden" name="MovementType" value="@(f.MovementType ?? "")" />
-                    <input type="hidden" name="Direction" value="@(f.Direction ?? "")" />
                     <input type="hidden" name="Season" value="@(f.Season ?? "")" />
-                    <input type="hidden" name="PublicTransportRef" value="@boolToString(f.PublicTransportRef)" />
-                    <input type="hidden" name="VUScheduleRef" value="@boolToString(f.VUScheduleRef)" />
                     <input type="hidden" name="FootTrafficCount" value="@(f.FootTrafficCount?.ToString() ?? "")" />
                     <input type="hidden" name="VehicleCount" value="@(f.VehicleCount?.ToString() ?? "")" />
 
-                    <!-- ✅ NEW: include Heatmap selection in exports too -->
+                    <!-- include Heatmap selection in exports too -->
                     <input type="hidden" name="Zone" value="@heatmapZone" />
                     <input type="hidden" name="HeatmapPeriod" value="@heatmapPeriod" />
 
@@ -389,209 +337,148 @@
             </div>
         </div>
 
-        <div class="panel-body">
-            @if (Model?.Results != null && Model.Results.Count > 0)
+        <div class="panel-body" style="padding-top:0;">
+            <div class="table-responsive">
+                <table class="table table-striped stm-table">
+                    <thead>
+                        <tr>
+                            <th>sensor</th>
+                            <th>timestamp</th>
+                            <th>movement</th>
+                            <th>season</th>
+                            <th>foot traffic</th>
+                            <th>vehicles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in (Model?.Results ?? new List<TrafficData>()))
+                        {
+                            <tr>
+                                <td>@prettySensor(r.SensorId)</td>
+                                <td>@r.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@(r.MovementType ?? "")</td>
+                                <td>@(r.Season ?? "")</td>
+                                <td>@r.FootTrafficCount</td>
+                                <td>@r.VehicleCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- pagination (FIXED: windowed pager) -->
+            @if (Model != null && Model.TotalPages > 1)
             {
-                <div class="results-wrap">
-                    <div class="results-scroll">
-                        <table class="table table-hover results-table">
-                            <thead>
-                                <tr>
-                                    <th>sensor</th>
-                                    <th>timestamp</th>
-                                    <th>movement</th>
-                                    <th>direction</th>
-                                    <th>season</th>
-                                    <th>foot traffic</th>
-                                    <th>vehicles</th>
-                                    <th>transport nearby</th>
-                                    <th>near vu</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var r in Model.Results)
-                                {
-                                    <tr>
-                                        <td title="@r.SensorId">@prettySensor(r.SensorId)</td>
-                                        <td class="cell-mono">@r.Timestamp.ToString("yyyy-MM-dd HH:mm")</td>
-                                        <td>@r.MovementType</td>
-                                        <td>@r.Direction</td>
-                                        <td>@r.Season</td>
-                                        <td class="cell-mono">@r.FootTrafficCount.ToString("N0")</td>
-                                        <td class="cell-mono">@r.VehicleCount.ToString("N0")</td>
-                                        <td>@(r.PublicTransportRef ? "Yes" : "No")</td>
-                                        <td>@(r.VuScheduleRef ? "Yes" : "No")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <nav aria-label="Page navigation" style="text-align:center;">
+                    <ul class="pagination stm-pagination">
 
-                <div class="stm-results-footer" style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px;">
-                    <div class="text-muted">
-                        page <strong>@Model.Page</strong> of <strong>@Model.TotalPages</strong>
-                        &nbsp; total rows: <strong>@Model.TotalCount</strong>
-                    </div>
+                        <!-- Prev -->
+                        <li class="@(Model.Page <= 1 ? "disabled" : "")">
+                            <a asp-action="Index"
+                               asp-controller="Home"
+                               asp-route-Page="@(Model.Page - 1)"
+                               asp-route-PageSize="@Model.PageSize"
+                               asp-route-SensorId="@f.SensorId"
+                               asp-route-From="@fmtDate(f.From)"
+                               asp-route-To="@fmtDate(f.To)"
+                               asp-route-MovementType="@f.MovementType"
+                               asp-route-Season="@f.Season"
+                               asp-route-FootTrafficCount="@f.FootTrafficCount"
+                               asp-route-VehicleCount="@f.VehicleCount">
+                                «
+                            </a>
+                        </li>
 
-                    <nav aria-label="results pagination">
-                        <ul class="pagination stm-pagination" style="margin:0;">
-                            @{
-                                var prevDisabled = Model.Page <= 1 ? "disabled" : "";
-                                var nextDisabled = Model.Page >= Model.TotalPages ? "disabled" : "";
-
-                                var totalPages = Model.TotalPages;
-                                var current = Model.Page;
-
-                                int window = 2;
-                                int start = Math.Max(1, current - window);
-                                int end = Math.Min(totalPages, current + window);
-                            }
-
-                            <li class="@prevDisabled">
-                                <a asp-action="Index"
-                                   asp-controller="Home"
-                                   asp-route-Page="@(Model.Page - 1)"
-                                   asp-route-PageSize="@Model.PageSize"
-                                   asp-route-SensorId="@f.SensorId"
-                                   asp-route-From="@f.From"
-                                   asp-route-To="@f.To"
-                                   asp-route-MovementType="@f.MovementType"
-                                   asp-route-Direction="@f.Direction"
-                                   asp-route-Season="@f.Season"
-                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
-                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
-                                   asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount"
-                                   asp-route-Zone="@heatmapZone"
-                                   asp-route-HeatmapPeriod="@heatmapPeriod">prev</a>
-                            </li>
-
-                            <li class="@(current == 1 ? "active" : "")">
+                        <!-- First + leading ellipsis -->
+                        @if (startPage > 1)
+                        {
+                            <li class="@(1 == currentPage ? "active" : "")">
                                 <a asp-action="Index"
                                    asp-controller="Home"
                                    asp-route-Page="1"
                                    asp-route-PageSize="@Model.PageSize"
                                    asp-route-SensorId="@f.SensorId"
-                                   asp-route-From="@f.From"
-                                   asp-route-To="@f.To"
+                                   asp-route-From="@fmtDate(f.From)"
+                                   asp-route-To="@fmtDate(f.To)"
                                    asp-route-MovementType="@f.MovementType"
-                                   asp-route-Direction="@f.Direction"
                                    asp-route-Season="@f.Season"
-                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
-                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
                                    asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount"
-                                   asp-route-Zone="@heatmapZone"
-                                   asp-route-HeatmapPeriod="@heatmapPeriod">1</a>
+                                   asp-route-VehicleCount="@f.VehicleCount">
+                                    1
+                                </a>
                             </li>
 
-                            @if (start > 2)
+                            @if (startPage > 2)
                             {
                                 <li class="disabled"><span>…</span></li>
                             }
+                        }
 
-                            @for (int p = start; p <= end; p++)
-                            {
-                                if (p == 1 || p == totalPages) { continue; }
-
-                                <li class="@(current == p ? "active" : "")">
-                                    <a asp-action="Index"
-                                       asp-controller="Home"
-                                       asp-route-Page="@p"
-                                       asp-route-PageSize="@Model.PageSize"
-                                       asp-route-SensorId="@f.SensorId"
-                                       asp-route-From="@f.From"
-                                       asp-route-To="@f.To"
-                                       asp-route-MovementType="@f.MovementType"
-                                       asp-route-Direction="@f.Direction"
-                                       asp-route-Season="@f.Season"
-                                       asp-route-PublicTransportRef="@f.PublicTransportRef"
-                                       asp-route-VUScheduleRef="@f.VUScheduleRef"
-                                       asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                       asp-route-VehicleCount="@f.VehicleCount"
-                                       asp-route-Zone="@heatmapZone"
-                                       asp-route-HeatmapPeriod="@heatmapPeriod">@p</a>
-                                </li>
-                            }
-
-                            @if (end < totalPages - 1)
-                            {
-                                <li class="disabled"><span>…</span></li>
-                            }
-
-                            @if (totalPages > 1)
-                            {
-                                <li class="@(current == totalPages ? "active" : "")">
-                                    <a asp-action="Index"
-                                       asp-controller="Home"
-                                       asp-route-Page="@totalPages"
-                                       asp-route-PageSize="@Model.PageSize"
-                                       asp-route-SensorId="@f.SensorId"
-                                       asp-route-From="@f.From"
-                                       asp-route-To="@f.To"
-                                       asp-route-MovementType="@f.MovementType"
-                                       asp-route-Direction="@f.Direction"
-                                       asp-route-Season="@f.Season"
-                                       asp-route-PublicTransportRef="@f.PublicTransportRef"
-                                       asp-route-VUScheduleRef="@f.VUScheduleRef"
-                                       asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                       asp-route-VehicleCount="@f.VehicleCount"
-                                       asp-route-Zone="@heatmapZone"
-                                       asp-route-HeatmapPeriod="@heatmapPeriod">@totalPages</a>
-                                </li>
-                            }
-
-                            <li class="@nextDisabled">
+                        <!-- Windowed page numbers -->
+                        @for (int p = startPage; p <= endPage; p++)
+                        {
+                            <li class="@(p == currentPage ? "active" : "")">
                                 <a asp-action="Index"
                                    asp-controller="Home"
-                                   asp-route-Page="@(Model.Page + 1)"
+                                   asp-route-Page="@p"
                                    asp-route-PageSize="@Model.PageSize"
                                    asp-route-SensorId="@f.SensorId"
-                                   asp-route-From="@f.From"
-                                   asp-route-To="@f.To"
+                                   asp-route-From="@fmtDate(f.From)"
+                                   asp-route-To="@fmtDate(f.To)"
                                    asp-route-MovementType="@f.MovementType"
-                                   asp-route-Direction="@f.Direction"
                                    asp-route-Season="@f.Season"
-                                   asp-route-PublicTransportRef="@f.PublicTransportRef"
-                                   asp-route-VUScheduleRef="@f.VUScheduleRef"
                                    asp-route-FootTrafficCount="@f.FootTrafficCount"
-                                   asp-route-VehicleCount="@f.VehicleCount"
-                                   asp-route-Zone="@heatmapZone"
-                                   asp-route-HeatmapPeriod="@heatmapPeriod">next</a>
+                                   asp-route-VehicleCount="@f.VehicleCount">
+                                    @p
+                                </a>
                             </li>
-                        </ul>
-                    </nav>
-                </div>
-            }
-            else
-            {
-                if (hasAnyQueryFilters)
-                {
-                    <p>no data found for the selected filters.</p>
-                }
-                else
-                {
-                    <p class="text-muted">apply filters to view results.</p>
-                }
-            }
-        </div>
-    </div>
+                        }
 
-    <!--Summary area -->
-    <div class="panel panel-default stm-card">
-        <div class="panel-heading"><strong>Summary</strong></div>
-        <div class="panel-body">
-            <p>
-                Dashboard view for traffic monitoring across Footscray zones using sensor data
-            </p>
-            <ul>
-                <li>Filter data & page through results</li>
-                <li>Heatmap preview driven by zone & time period</li>
-                <li>Export reports in CSV or PDF</li>
-                <li>Supports movement type, direction, season, & reference filters</li>
-                <li>Simulate future impacts with the Event Impact Simulator</li>
-            </ul>
+                        <!-- Trailing ellipsis + last -->
+                        @if (endPage < totalPages)
+                        {
+                            @if (endPage < totalPages - 1)
+                            {
+                                <li class="disabled"><span>…</span></li>
+                            }
+
+                            <li class="@(totalPages == currentPage ? "active" : "")">
+                                <a asp-action="Index"
+                                   asp-controller="Home"
+                                   asp-route-Page="@totalPages"
+                                   asp-route-PageSize="@Model.PageSize"
+                                   asp-route-SensorId="@f.SensorId"
+                                   asp-route-From="@fmtDate(f.From)"
+                                   asp-route-To="@fmtDate(f.To)"
+                                   asp-route-MovementType="@f.MovementType"
+                                   asp-route-Season="@f.Season"
+                                   asp-route-FootTrafficCount="@f.FootTrafficCount"
+                                   asp-route-VehicleCount="@f.VehicleCount">
+                                    @totalPages
+                                </a>
+                            </li>
+                        }
+
+                        <!-- Next -->
+                        <li class="@(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                            <a asp-action="Index"
+                               asp-controller="Home"
+                               asp-route-Page="@(Model.Page + 1)"
+                               asp-route-PageSize="@Model.PageSize"
+                               asp-route-SensorId="@f.SensorId"
+                               asp-route-From="@fmtDate(f.From)"
+                               asp-route-To="@fmtDate(f.To)"
+                               asp-route-MovementType="@f.MovementType"
+                               asp-route-Season="@f.Season"
+                               asp-route-FootTrafficCount="@f.FootTrafficCount"
+                               asp-route-VehicleCount="@f.VehicleCount">
+                                »
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+            }
         </div>
     </div>
 
@@ -634,10 +521,7 @@
             append(qs, 'From', getVal('From'));
             append(qs, 'To', getVal('To'));
             append(qs, 'MovementType', getVal('MovementType'));
-            append(qs, 'Direction', getVal('Direction'));
             append(qs, 'Season', getVal('Season'));
-            append(qs, 'PublicTransportRef', getVal('PublicTransportRef'));
-            append(qs, 'VUScheduleRef', getVal('VUScheduleRef'));
             append(qs, 'FootTrafficCount', getVal('FootTrafficCount'));
             append(qs, 'VehicleCount', getVal('VehicleCount'));
 

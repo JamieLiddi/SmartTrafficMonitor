@@ -91,15 +91,33 @@ namespace SmartTrafficMonitor.Controllers
                 windowQuery = windowQuery.Where(t => zoneRawSlugs.Contains(t.SensorId));
             }
 
-            // AGGREGATE BY SENSOR (top 50)
+            // ✅ AGGREGATE BY SENSOR (top 50) - now includes split for tooltips
             var sensorAgg = windowQuery
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
                 {
                     SensorId = g.Key,
+
+                    // Split fields
+                    Pedestrians = g.Sum(x => x.MovementType == "Pedestrian" ? x.FootTrafficCount : 0),
+                    Cyclists = g.Sum(x => x.MovementType == "Cyclist" ? x.FootTrafficCount : 0),
+
+                    // Vehicles live in VehicleCount
+                    Vehicles = g.Sum(x => x.VehicleCount),
+
+                    // Keep weight (back-compat / debugging)
                     Weight = g.Sum(x => (x.FootTrafficCount + x.VehicleCount))
                 })
-                .OrderByDescending(x => x.Weight)
+                .Select(x => new
+                {
+                    x.SensorId,
+                    x.Pedestrians,
+                    x.Cyclists,
+                    x.Vehicles,
+                    x.Weight,
+                    Total = x.Pedestrians + x.Cyclists + x.Vehicles
+                })
+                .OrderByDescending(x => x.Total)
                 .Take(50)
                 .ToList();
 
@@ -113,8 +131,8 @@ namespace SmartTrafficMonitor.Controllers
                 .Where(l => sensorSlugNormSet.Contains(NormSlug(l.SensorSlug)))
                 .ToDictionary(l => NormSlug(l.SensorSlug), l => l);
 
-            // Dynamic scaling: intensity relative to maxWeight
-            var maxWeight = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Weight) : 0;
+            // Dynamic scaling: intensity relative to maxTotal (so heatmap matches tooltip total)
+            var maxTotal = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Total) : 0;
 
             var heatPoints = new List<double[]>();
             var markers = new List<object>();
@@ -149,16 +167,24 @@ namespace SmartTrafficMonitor.Controllers
                     usedFallbackCoords++;
                 }
 
-                var intensity = maxWeight <= 0 ? 0.0 : (double)s.Weight / maxWeight;
+                var intensity = maxTotal <= 0 ? 0.0 : (double)s.Total / maxTotal;
                 intensity = Math.Clamp(intensity, 0.05, 1.0);
 
                 heatPoints.Add(new[] { lat, lng, intensity });
 
+                // ✅ Markers now include split fields expected by tooltip logic
                 markers.Add(new
                 {
                     slug = s.SensorId ?? "",
                     lat,
                     lng,
+
+                    pedestrians = s.Pedestrians,
+                    cyclists = s.Cyclists,
+                    vehicles = s.Vehicles,
+                    total = s.Total,
+
+                    // keep weight for any legacy UI/debug
                     weight = s.Weight
                 });
             }
@@ -172,11 +198,13 @@ namespace SmartTrafficMonitor.Controllers
                 heatPoints.Add(new[] { centerLat + 0.0001, centerLng - 0.0007, 0.65 });
 
                 markers.Clear();
-                markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, weight = 800 });
-                markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, weight = 600 });
-                markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, weight = 700 });
-                markers.Add(new { slug = "demo-d", lat = centerLat - 0.0007, lng = centerLng + 0.0001, weight = 500 });
-                markers.Add(new { slug = "demo-e", lat = centerLat + 0.0001, lng = centerLng - 0.0007, weight = 650 });
+
+                // ✅ Demo markers also include split fields so tooltip mode stays consistent
+                markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, pedestrians = 500, cyclists = 60, vehicles = 240, total = 800, weight = 800 });
+                markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, pedestrians = 380, cyclists = 40, vehicles = 180, total = 600, weight = 600 });
+                markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, pedestrians = 420, cyclists = 55, vehicles = 225, total = 700, weight = 700 });
+                markers.Add(new { slug = "demo-d", lat = centerLat - 0.0007, lng = centerLng + 0.0001, pedestrians = 310, cyclists = 30, vehicles = 160, total = 500, weight = 500 });
+                markers.Add(new { slug = "demo-e", lat = centerLat + 0.0001, lng = centerLng - 0.0007, pedestrians = 360, cyclists = 45, vehicles = 245, total = 650, weight = 650 });
 
                 usedRealCoords = 0;
                 usedFallbackCoords = markers.Count;
