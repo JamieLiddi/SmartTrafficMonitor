@@ -224,7 +224,7 @@ namespace SmartTrafficMonitor.Services
     // data access service
     public static class DataService
     {
-        // ✅ lets controllers reuse the exact same filtering query (for KPIs, charts, etc.)
+        // lets controllers reuse the exact same filtering query (for KPIs, charts, etc.)
         public static IQueryable<TrafficData> GetFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
         {
             return BuildFilteredQuery(context, filters);
@@ -276,13 +276,13 @@ namespace SmartTrafficMonitor.Services
         // Shared filtering logic
         private static IQueryable<TrafficData> BuildFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
         {
-            // ✅ AsNoTracking: faster for dashboard reads
+            // AsNoTracking: faster for dashboard reads
             var q = context.TrafficDatas.AsNoTracking().AsQueryable();
 
             if (filters == null)
                 return q;
 
-            // ✅ Normalize string filters (trim + empty => null)
+            // Normalize string filters (trim + empty => null)
             static string? Norm(string? s)
             {
                 if (string.IsNullOrWhiteSpace(s)) return null;
@@ -297,7 +297,7 @@ namespace SmartTrafficMonitor.Services
             var from = filters.From ?? filters.TimeStampStart ?? filters.TimeStamp;
             var to = filters.To ?? filters.TimeStampEnd ?? filters.TimeStamp;
 
-            // ✅ Only specify UTC kind if it's unspecified (avoid breaking already-UTC values)
+            // Only specify UTC kind if it's unspecified (avoid breaking already-UTC values)
             static DateTime EnsureUtcKind(DateTime dt)
             {
                 if (dt.Kind == DateTimeKind.Unspecified)

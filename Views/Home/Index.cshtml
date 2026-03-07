@@ -47,7 +47,7 @@
     }
 
     // Heatmap defaults (driven by filter model so it persists)
-    var heatmapZone = string.IsNullOrWhiteSpace(f.Zone) ? "Footscray Park" : f.Zone;
+    var heatmapZone = string.IsNullOrWhiteSpace(f.Zone) ? "All" : f.Zone;
     var heatmapPeriod = string.IsNullOrWhiteSpace(f.HeatmapPeriod) ? "Weekly" : f.HeatmapPeriod;
 
     // Heatmap iframe src builder
@@ -116,7 +116,6 @@
         }
     </div>
 
-    <!-- ✅ KPI CARDS -->
     <div class="stm-kpi-grid" style="margin-bottom:14px;">
         <div class="stm-kpi-card">
             <div class="stm-kpi-label">Pedestrians</div>
@@ -144,7 +143,6 @@
         </div>
     </div>
 
-    <!-- Heatmap preview + event impact -->
     <div class="panel panel-default stm-card">
         <div class="panel-heading stm-card-header">
             <div class="stm-card-header-left">
@@ -163,11 +161,9 @@
                 <div class="col-md-4">
                     <label for="HeatmapZone">Select Zone</label>
                     <select id="HeatmapZone" name="Zone" class="form-control">
+                        <option value="All" selected="@(heatmapZone == "All" ? "selected" : null)">All</option>
                         <option value="VU Campus" selected="@(heatmapZone == "VU Campus" ? "selected" : null)">VU Campus</option>
-                        <option value="Footscray Park" selected="@(heatmapZone == "Footscray Park" ? "selected" : null)">Footscray Park</option>
-                        <option value="Footscray Market" selected="@(heatmapZone == "Footscray Market" ? "selected" : null)">Footscray Market</option>
-                        <option value="Nicholson St Mall" selected="@(heatmapZone == "Nicholson St Mall" ? "selected" : null)">Nicholson St Mall</option>
-                        <option value="Footscray Library" selected="@(heatmapZone == "Footscray Library" ? "selected" : null)">Footscray Library</option>
+                        <option value="Footscray City" selected="@(heatmapZone == "Footscray City" ? "selected" : null)">Footscray City</option>
                     </select>
                 </div>
 
@@ -194,7 +190,6 @@
         </div>
     </div>
 
-    <!-- filters -->
     <div class="panel panel-default stm-card">
         <div class="panel-heading stm-card-header">
             <div class="stm-card-header-left">
@@ -239,10 +234,9 @@
                     </div>
                 </div>
 
-                <!-- ✅ Direction / transport nearby / near VU schedule removed -->
                 <div class="row">
                     <div class="col-md-3">
-                        <label for="Season">season</label>
+                        <label for="Season">Season</label>
                         <select id="Season" name="Season" class="form-control">
                             <option value="" selected="@(string.IsNullOrWhiteSpace(f.Season) ? "selected" : null)">(any)</option>
                             <option value="Summer" selected="@(f.Season == "Summer" ? "selected" : null)">Summer</option>
@@ -253,26 +247,25 @@
                     </div>
                 </div>
 
-                <!-- Thresholds & paging -->
                 <div class="row">
                     <div class="col-md-3">
-                        <label for="FootTrafficCount">min foot traffic</label>
+                        <label for="FootTrafficCount">Min Foot Traffic</label>
                         <input type="number" id="FootTrafficCount" name="FootTrafficCount" class="form-control"
                                min="0" step="1" placeholder="(any)"
                                value="@(f.FootTrafficCount?.ToString() ?? "")" />
-                        <div class="help-text">shows rows with foot traffic count greater than or equal to this</div>
+                        <div class="help-text">Shows rows with foot traffic greater than or equal to this value.</div>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="VehicleCount">min vehicle count</label>
+                        <label for="VehicleCount">Min Vehicle Count</label>
                         <input type="number" id="VehicleCount" name="VehicleCount" class="form-control"
                                min="0" step="1" placeholder="(any)"
                                value="@(f.VehicleCount?.ToString() ?? "")" />
-                        <div class="help-text">shows rows with vehicle count greater than or equal to this</div>
+                        <div class="help-text">Shows rows with vehicle count greater than or equal to this value.</div>
                     </div>
 
                     <div class="col-md-3">
-                        <label for="PageSize">rows per page</label>
+                        <label for="PageSize">Rows Per Page</label>
                         <select id="PageSize" name="PageSize" class="form-control">
                             <option value="25" selected="@(f.PageSize == 25 ? "selected" : null)">25</option>
                             <option value="50" selected="@(f.PageSize == 50 ? "selected" : null)">50</option>
@@ -281,18 +274,18 @@
                     </div>
 
                     <div class="col-md-3" style="padding-top:24px;">
-                        <a class="btn btn-default stm-secondary-btn" style="width:100%;" href="@Url.Action("Index","Home")">reset</a>
+                        <a class="btn btn-default stm-secondary-btn" style="width:100%;" href="@Url.Action("Index","Home")">Reset</a>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">apply filters</button>
+                        <button type="submit" class="btn btn-primary stm-primary-btn" style="width:100%;">Apply Filters</button>
                     </div>
                     <div class="col-md-10 text-muted" style="padding-top: 8px;">
                         @if (Model != null)
                         {
-                            <span>matches: <strong>@Model.TotalCount</strong></span>
+                            <span>Matches: <strong>@Model.TotalCount</strong></span>
                             <span class="text-muted"> &nbsp; (showing @(Model.Results?.Count ?? 0) on this page)</span>
                         }
                     </div>
@@ -302,11 +295,10 @@
         </div>
     </div>
 
-    <!-- results -->
     <div class="panel panel-default stm-card">
         <div class="panel-heading stm-card-header">
             <div class="stm-card-header-left">
-                <strong>results</strong>
+                <strong>Results</strong>
                 @if (Model != null)
                 {
                     <span class="stm-subtle">showing @Model.PageSize of @Model.TotalCount records</span>
@@ -322,17 +314,15 @@
                     <input type="hidden" name="Season" value="@(f.Season ?? "")" />
                     <input type="hidden" name="FootTrafficCount" value="@(f.FootTrafficCount?.ToString() ?? "")" />
                     <input type="hidden" name="VehicleCount" value="@(f.VehicleCount?.ToString() ?? "")" />
-
-                    <!-- include Heatmap selection in exports too -->
                     <input type="hidden" name="Zone" value="@heatmapZone" />
                     <input type="hidden" name="HeatmapPeriod" value="@heatmapPeriod" />
 
                     <select id="ExportFormat" name="ExportFormat" class="form-control stm-export-select">
-                        <option value="csv">csv</option>
-                        <option value="pdf">pdf</option>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
                     </select>
 
-                    <button type="submit" class="btn btn-default stm-export-btn">export</button>
+                    <button type="submit" class="btn btn-default stm-export-btn">Export</button>
                 </form>
             </div>
         </div>
@@ -342,12 +332,12 @@
                 <table class="table table-striped stm-table">
                     <thead>
                         <tr>
-                            <th>sensor</th>
-                            <th>timestamp</th>
-                            <th>movement</th>
-                            <th>season</th>
-                            <th>foot traffic</th>
-                            <th>vehicles</th>
+                            <th>Sensor</th>
+                            <th>Timestamp</th>
+                            <th>Movement</th>
+                            <th>Season</th>
+                            <th>Foot Traffic</th>
+                            <th>Vehicles</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -366,13 +356,11 @@
                 </table>
             </div>
 
-            <!-- pagination (FIXED: windowed pager) -->
             @if (Model != null && Model.TotalPages > 1)
             {
                 <nav aria-label="Page navigation" style="text-align:center;">
                     <ul class="pagination stm-pagination">
 
-                        <!-- Prev -->
                         <li class="@(Model.Page <= 1 ? "disabled" : "")">
                             <a asp-action="Index"
                                asp-controller="Home"
@@ -389,7 +377,6 @@
                             </a>
                         </li>
 
-                        <!-- First + leading ellipsis -->
                         @if (startPage > 1)
                         {
                             <li class="@(1 == currentPage ? "active" : "")">
@@ -414,7 +401,6 @@
                             }
                         }
 
-                        <!-- Windowed page numbers -->
                         @for (int p = startPage; p <= endPage; p++)
                         {
                             <li class="@(p == currentPage ? "active" : "")">
@@ -434,7 +420,6 @@
                             </li>
                         }
 
-                        <!-- Trailing ellipsis + last -->
                         @if (endPage < totalPages)
                         {
                             @if (endPage < totalPages - 1)
@@ -459,7 +444,6 @@
                             </li>
                         }
 
-                        <!-- Next -->
                         <li class="@(Model.Page >= Model.TotalPages ? "disabled" : "")">
                             <a asp-action="Index"
                                asp-controller="Home"
@@ -515,8 +499,6 @@
             append(qs, 'zone', zone);
             append(qs, 'period', period);
             append(qs, 'HeatmapPeriod', period);
-
-            // carry across current filter form values (so heatmap matches table window)
             append(qs, 'SensorId', getVal('SensorId'));
             append(qs, 'From', getVal('From'));
             append(qs, 'To', getVal('To'));

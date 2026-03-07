@@ -1,4 +1,3 @@
-// Controllers/HeatmapPageController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartTrafficMonitor.Models;
@@ -30,10 +29,9 @@ namespace SmartTrafficMonitor.Controllers
         [HttpGet("View")]
         public IActionResult View(string zone, string period)
         {
-            var safeZone = string.IsNullOrWhiteSpace(zone) ? "Footscray Park" : zone.Trim();
+            var safeZone = string.IsNullOrWhiteSpace(zone) ? "All" : zone.Trim();
             var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period.Trim();
 
-            // TIME WINDOW (anchor to latest DB timestamp so window is never empty)
             var latestTs = _context.TrafficDatas
                 .AsNoTracking()
                 .Select(t => (DateTime?)t.Timestamp)
@@ -48,12 +46,11 @@ namespace SmartTrafficMonitor.Controllers
                 _ => now.AddDays(-7),
             };
 
-            // CENTER COORDS (map view)
             double centerLat, centerLng;
-            if (safeZone.ToLowerInvariant().Contains("vu"))
+            if (safeZone.Equals("VU Campus", StringComparison.OrdinalIgnoreCase))
             {
-                centerLat = -37.8070;
-                centerLng = 144.8990;
+                centerLat = -37.7948;
+                centerLng = 144.9033;
             }
             else
             {
@@ -61,28 +58,56 @@ namespace SmartTrafficMonitor.Controllers
                 centerLng = 144.9015;
             }
 
-            // ✅ IMPORTANT: Zone-based sensor filter (so VU doesn't show Footscray sensors)
-            // Assumes SensorLocations.Zone stores something like "Footscray Park" or "VU Campus"
-            var zoneSensorSlugs = _context.SensorLocations
+            var allLocations = _context.SensorLocations
                 .AsNoTracking()
-                .Where(l => l.Zone == safeZone)
-                .Select(l => l.SensorSlug)
                 .ToList();
+
+            var vuCampusSlugSet = new HashSet<string>(
+                new[]
+                {
+                    "footscray-park-gardens",
+                    "footscray-park-rowing-club",
+                    "salt-water-child-care-centre"
+                }.Select(NormSlug)
+            );
+
+            List<string> zoneSensorSlugs;
+
+            if (safeZone.Equals("VU Campus", StringComparison.OrdinalIgnoreCase))
+            {
+                zoneSensorSlugs = allLocations
+                    .Where(l => vuCampusSlugSet.Contains(NormSlug(l.SensorSlug)))
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
+            else if (safeZone.Equals("Footscray City", StringComparison.OrdinalIgnoreCase))
+            {
+                zoneSensorSlugs = allLocations
+                    .Where(l => !vuCampusSlugSet.Contains(NormSlug(l.SensorSlug)))
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
+            else // All
+            {
+                zoneSensorSlugs = allLocations
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
 
             var zoneSensorSlugSet = zoneSensorSlugs
                 .Select(NormSlug)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToHashSet();
 
-            // Pull rows in the selected window (queryable)
             var windowQuery = _context.TrafficDatas
                 .AsNoTracking()
                 .Where(t => t.Timestamp >= start && t.Timestamp <= now);
 
-            // If we have zone sensors, filter the window query to that zone’s sensors only
             if (zoneSensorSlugSet.Count > 0)
             {
-                // Prefer exact match on stored slug if possible:
                 var zoneRawSlugs = zoneSensorSlugs
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .Select(s => s.Trim())
@@ -91,21 +116,14 @@ namespace SmartTrafficMonitor.Controllers
                 windowQuery = windowQuery.Where(t => zoneRawSlugs.Contains(t.SensorId));
             }
 
-            // ✅ AGGREGATE BY SENSOR (top 50) - now includes split for tooltips
             var sensorAgg = windowQuery
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
                 {
                     SensorId = g.Key,
-
-                    // Split fields
                     Pedestrians = g.Sum(x => x.MovementType == "Pedestrian" ? x.FootTrafficCount : 0),
                     Cyclists = g.Sum(x => x.MovementType == "Cyclist" ? x.FootTrafficCount : 0),
-
-                    // Vehicles live in VehicleCount
                     Vehicles = g.Sum(x => x.VehicleCount),
-
-                    // Keep weight (back-compat / debugging)
                     Weight = g.Sum(x => (x.FootTrafficCount + x.VehicleCount))
                 })
                 .Select(x => new
@@ -121,17 +139,13 @@ namespace SmartTrafficMonitor.Controllers
                 .Take(50)
                 .ToList();
 
-            // Pull locations for only the sensors we’re plotting (normalize keying)
             var sensorSlugs = sensorAgg.Select(x => x.SensorId).ToList();
             var sensorSlugNormSet = sensorSlugs.Select(NormSlug).ToHashSet();
 
-            var locationsNorm = _context.SensorLocations
-                .AsNoTracking()
-                .ToList()
+            var locationsNorm = allLocations
                 .Where(l => sensorSlugNormSet.Contains(NormSlug(l.SensorSlug)))
                 .ToDictionary(l => NormSlug(l.SensorSlug), l => l);
 
-            // Dynamic scaling: intensity relative to maxTotal (so heatmap matches tooltip total)
             var maxTotal = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Total) : 0;
 
             var heatPoints = new List<double[]>();
@@ -157,7 +171,6 @@ namespace SmartTrafficMonitor.Controllers
                 }
                 else
                 {
-                    // Stable fallback so map never breaks
                     var h = Math.Abs((s.SensorId ?? "").GetHashCode());
                     var a = (h % 10) - 5;
                     var b = ((h / 10) % 10) - 5;
@@ -172,19 +185,15 @@ namespace SmartTrafficMonitor.Controllers
 
                 heatPoints.Add(new[] { lat, lng, intensity });
 
-                // ✅ Markers now include split fields expected by tooltip logic
                 markers.Add(new
                 {
                     slug = s.SensorId ?? "",
                     lat,
                     lng,
-
                     pedestrians = s.Pedestrians,
                     cyclists = s.Cyclists,
                     vehicles = s.Vehicles,
                     total = s.Total,
-
-                    // keep weight for any legacy UI/debug
                     weight = s.Weight
                 });
             }
@@ -198,8 +207,6 @@ namespace SmartTrafficMonitor.Controllers
                 heatPoints.Add(new[] { centerLat + 0.0001, centerLng - 0.0007, 0.65 });
 
                 markers.Clear();
-
-                // ✅ Demo markers also include split fields so tooltip mode stays consistent
                 markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, pedestrians = 500, cyclists = 60, vehicles = 240, total = 800, weight = 800 });
                 markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, pedestrians = 380, cyclists = 40, vehicles = 180, total = 600, weight = 600 });
                 markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, pedestrians = 420, cyclists = 55, vehicles = 225, total = 700, weight = 700 });
@@ -210,7 +217,6 @@ namespace SmartTrafficMonitor.Controllers
                 usedFallbackCoords = markers.Count;
             }
 
-            // classify intensities into low/mid/high for HUD
             int low = 0, mid = 0, high = 0;
             foreach (var p in heatPoints)
             {
@@ -220,7 +226,6 @@ namespace SmartTrafficMonitor.Controllers
                 else high++;
             }
 
-            // SEND TO VIEW
             ViewData["Zone"] = safeZone;
             ViewData["Period"] = safePeriod;
             ViewData["CenterLat"] = centerLat;
@@ -233,7 +238,6 @@ namespace SmartTrafficMonitor.Controllers
             ViewData["MidCount"] = mid;
             ViewData["HighCount"] = high;
 
-            // ✅ Debug numbers
             ViewData["RealCoordsCount"] = usedRealCoords;
             ViewData["FallbackCoordsCount"] = usedFallbackCoords;
             ViewData["ZoneSensorsCount"] = zoneSensorSlugSet.Count;
