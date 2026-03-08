@@ -18,119 +18,39 @@ namespace SmartTrafficMonitor.Controllers
             _context = context;
         }
 
+        private static string NormSlug(string? s)
+        {
+            return (s ?? "")
+                .Trim()
+                .Replace("_", "-")
+                .ToLowerInvariant();
+        }
+
         [HttpGet("View")]
         public IActionResult View(string zone, string period)
         {
-            var safeZone = string.IsNullOrWhiteSpace(zone) ? "Footscray Park" : zone;
-            var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period;
+            var safeZone = string.IsNullOrWhiteSpace(zone) ? "All" : zone.Trim();
+            var safePeriod = string.IsNullOrWhiteSpace(period) ? "Weekly" : period.Trim();
 
-            // TIME WINDOW
             var latestTs = _context.TrafficDatas
+                .AsNoTracking()
                 .Select(t => (DateTime?)t.Timestamp)
                 .Max();
 
             var now = latestTs ?? DateTime.UtcNow;
 
-            DateTime start;
-            switch (safePeriod.Trim().ToLowerInvariant())
+            DateTime start = safePeriod.Trim().ToLowerInvariant() switch
             {
-                case "monthly":
-                    start = now.AddDays(-30);
-                    break;
-                case "seasonal":
-                    start = now.AddDays(-90);
-                    break;
-                default:
-                    start = now.AddDays(-7);
-                    break;
-            }
+                "monthly" => now.AddDays(-30),
+                "seasonal" => now.AddDays(-90),
+                _ => now.AddDays(-7),
+            };
 
-            // Pull rows in the selected window
-            var rows = _context.TrafficDatas
-                .Where(t => t.Timestamp >= start && t.Timestamp <= now)
-                .ToList();
-
-            // DEBUG: BASIC DB + WINDOW INFO
-            var totalDbRows = _context.TrafficDatas.Count();
-
-            var minTs = _context.TrafficDatas.Min(t => t.Timestamp);
-            var maxTs = _context.TrafficDatas.Max(t => t.Timestamp);
-
-            var distinctSensors = _context.TrafficDatas
-                .Select(t => t.SensorId)
-                .Distinct()
-                .OrderBy(x => x)
-                .Take(100)
-                .ToList();
-
-            Console.WriteLine(" HEATMAP DEBUG ");
-            Console.WriteLine($"TOTAL ROWS IN TrafficDatas TABLE: {totalDbRows}");
-            Console.WriteLine($"ROWS IN CURRENT WINDOW: {rows.Count}");
-            Console.WriteLine($"DB Timestamp Range: {minTs} -> {maxTs}");
-            Console.WriteLine($"Window Timestamp Range: {start} -> {now}");
-            Console.WriteLine("First 100 distinct SensorIds:");
-            Console.WriteLine(string.Join(", ", distinctSensors));
-
-            Console.WriteLine("First 10 rows in current window:");
-            foreach (var r in rows.Take(10))
-            {
-                Console.WriteLine($"SensorId: {r.SensorId} | Foot: {r.FootTrafficCount} | Vehicle: {r.VehicleCount} | Timestamp: {r.Timestamp}");
-            }
-
-            // DEBUG: SCHEMA PROBE
-            try
-            {
-                var schemaSql = @"
-SELECT table_name, column_name, data_type
-FROM information_schema.columns
-WHERE table_schema = 'public'
-AND (
-    column_name ILIKE '%lat%' OR
-    column_name ILIKE '%lon%' OR
-    column_name ILIKE '%lng%' OR
-    column_name ILIKE '%longitude%' OR
-    column_name ILIKE '%latitude%' OR
-    column_name ILIKE '%coord%' OR
-    column_name ILIKE '%sensor%'
-)
-ORDER BY table_name, column_name;
-";
-
-                var conn = _context.Database.GetDbConnection();
-                if (conn.State != System.Data.ConnectionState.Open)
-                    conn.Open();
-
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = schemaSql;
-
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        Console.WriteLine("=== POSSIBLE LOCATION / SENSOR SCHEMA ===");
-                        while (reader.Read())
-                        {
-                            var table = reader.GetString(0);
-                            var col = reader.GetString(1);
-                            var type = reader.GetString(2);
-                            Console.WriteLine($"{table}.{col} ({type})");
-                        }
-                        Console.WriteLine("=== END SCHEMA ===");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("=== SCHEMA PROBE FAILED ===");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine("=== END SCHEMA PROBE FAILED ===");
-            }
-
-            // CENTER COORDS
             double centerLat, centerLng;
-            if (safeZone.Trim().ToLowerInvariant().Contains("vu"))
+            if (safeZone.Equals("VU Campus", StringComparison.OrdinalIgnoreCase))
             {
-                centerLat = -37.8070;
-                centerLng = 144.8990;
+                centerLat = -37.7948;
+                centerLng = 144.9033;
             }
             else
             {
@@ -138,68 +58,146 @@ ORDER BY table_name, column_name;
                 centerLng = 144.9015;
             }
 
-            // AGGREGATE BY SENSOR
-            var sensorAgg = rows
+            var allLocations = _context.SensorLocations
+                .AsNoTracking()
+                .ToList();
+
+            var vuCampusSlugSet = new HashSet<string>(
+                new[]
+                {
+                    "footscray-park-gardens",
+                    "footscray-park-rowing-club",
+                    "salt-water-child-care-centre"
+                }.Select(NormSlug)
+            );
+
+            List<string> zoneSensorSlugs;
+
+            if (safeZone.Equals("VU Campus", StringComparison.OrdinalIgnoreCase))
+            {
+                zoneSensorSlugs = allLocations
+                    .Where(l => vuCampusSlugSet.Contains(NormSlug(l.SensorSlug)))
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
+            else if (safeZone.Equals("Footscray City", StringComparison.OrdinalIgnoreCase))
+            {
+                zoneSensorSlugs = allLocations
+                    .Where(l => !vuCampusSlugSet.Contains(NormSlug(l.SensorSlug)))
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
+            else // All
+            {
+                zoneSensorSlugs = allLocations
+                    .Select(l => l.SensorSlug)
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+            }
+
+            var zoneSensorSlugSet = zoneSensorSlugs
+                .Select(NormSlug)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToHashSet();
+
+            var windowQuery = _context.TrafficDatas
+                .AsNoTracking()
+                .Where(t => t.Timestamp >= start && t.Timestamp <= now);
+
+            if (zoneSensorSlugSet.Count > 0)
+            {
+                var zoneRawSlugs = zoneSensorSlugs
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Select(s => s.Trim())
+                    .ToList();
+
+                windowQuery = windowQuery.Where(t => zoneRawSlugs.Contains(t.SensorId));
+            }
+
+            var sensorAgg = windowQuery
                 .GroupBy(r => r.SensorId)
                 .Select(g => new
                 {
                     SensorId = g.Key,
+                    Pedestrians = g.Sum(x => x.MovementType == "Pedestrian" ? x.FootTrafficCount : 0),
+                    Cyclists = g.Sum(x => x.MovementType == "Cyclist" ? x.FootTrafficCount : 0),
+                    Vehicles = g.Sum(x => x.VehicleCount),
                     Weight = g.Sum(x => (x.FootTrafficCount + x.VehicleCount))
                 })
-                .OrderByDescending(x => x.Weight)
+                .Select(x => new
+                {
+                    x.SensorId,
+                    x.Pedestrians,
+                    x.Cyclists,
+                    x.Vehicles,
+                    x.Weight,
+                    Total = x.Pedestrians + x.Cyclists + x.Vehicles
+                })
+                .OrderByDescending(x => x.Total)
                 .Take(50)
                 .ToList();
 
-            Console.WriteLine("---- AGGREGATED SENSOR WEIGHTS (Top 50) ----");
-            foreach (var s in sensorAgg.Take(10))
-            {
-                Console.WriteLine($"SensorId: {s.SensorId} | Weight: {s.Weight}");
-            }
-
-            // HEAT POINTS (prefer DB coordinates by sensor_slug, fallback to fake coords)
             var sensorSlugs = sensorAgg.Select(x => x.SensorId).ToList();
+            var sensorSlugNormSet = sensorSlugs.Select(NormSlug).ToHashSet();
 
-            var locations = _context.SensorLocations
-                .Where(l => sensorSlugs.Contains(l.SensorSlug))
-                .ToDictionary(l => l.SensorSlug, l => l);
+            var locationsNorm = allLocations
+                .Where(l => sensorSlugNormSet.Contains(NormSlug(l.SensorSlug)))
+                .ToDictionary(l => NormSlug(l.SensorSlug), l => l);
 
-            // NEW: dynamic scaling so intensities are not all 1.0
-            var maxWeight = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Weight) : 0;
-            Console.WriteLine($"MaxWeight in window/top set: {maxWeight}");
+            var maxTotal = sensorAgg.Count > 0 ? sensorAgg.Max(x => x.Total) : 0;
 
             var heatPoints = new List<double[]>();
+            var markers = new List<object>();
+
+            int usedRealCoords = 0;
+            int usedFallbackCoords = 0;
 
             foreach (var s in sensorAgg)
             {
                 double lat, lng;
 
-                // Prefer real DB coordinates (match by slug)
-                if (locations.TryGetValue(s.SensorId ?? "", out var loc)
+                var key = NormSlug(s.SensorId);
+
+                if (!string.IsNullOrWhiteSpace(key)
+                    && locationsNorm.TryGetValue(key, out var loc)
                     && loc.Latitude.HasValue
                     && loc.Longitude.HasValue)
                 {
                     lat = loc.Latitude.Value;
                     lng = loc.Longitude.Value;
+                    usedRealCoords++;
                 }
                 else
                 {
-                    // Stable fallback based on slug so the map never breaks
                     var h = Math.Abs((s.SensorId ?? "").GetHashCode());
                     var a = (h % 10) - 5;
                     var b = ((h / 10) % 10) - 5;
 
                     lat = centerLat + (a * 0.0009);
                     lng = centerLng + (b * 0.0011);
+                    usedFallbackCoords++;
                 }
 
-                // NEW: intensity scaled 0..1 relative to maxWeight + optional minimum for visibility
-                var intensity = maxWeight <= 0 ? 0.0 : (double)s.Weight / maxWeight;
+                var intensity = maxTotal <= 0 ? 0.0 : (double)s.Total / maxTotal;
                 intensity = Math.Clamp(intensity, 0.05, 1.0);
 
                 heatPoints.Add(new[] { lat, lng, intensity });
+
+                markers.Add(new
+                {
+                    slug = s.SensorId ?? "",
+                    lat,
+                    lng,
+                    pedestrians = s.Pedestrians,
+                    cyclists = s.Cyclists,
+                    vehicles = s.Vehicles,
+                    total = s.Total,
+                    weight = s.Weight
+                });
             }
 
-            // If somehow nothing plotted, add demo points so map never looks broken.
             if (heatPoints.Count == 0)
             {
                 heatPoints.Add(new[] { centerLat + 0.0006, centerLng + 0.0006, 0.8 });
@@ -207,17 +205,42 @@ ORDER BY table_name, column_name;
                 heatPoints.Add(new[] { centerLat - 0.0003, centerLng - 0.0002, 0.7 });
                 heatPoints.Add(new[] { centerLat - 0.0007, centerLng + 0.0001, 0.5 });
                 heatPoints.Add(new[] { centerLat + 0.0001, centerLng - 0.0007, 0.65 });
+
+                markers.Clear();
+                markers.Add(new { slug = "demo-a", lat = centerLat + 0.0006, lng = centerLng + 0.0006, pedestrians = 500, cyclists = 60, vehicles = 240, total = 800, weight = 800 });
+                markers.Add(new { slug = "demo-b", lat = centerLat + 0.0002, lng = centerLng + 0.0004, pedestrians = 380, cyclists = 40, vehicles = 180, total = 600, weight = 600 });
+                markers.Add(new { slug = "demo-c", lat = centerLat - 0.0003, lng = centerLng - 0.0002, pedestrians = 420, cyclists = 55, vehicles = 225, total = 700, weight = 700 });
+                markers.Add(new { slug = "demo-d", lat = centerLat - 0.0007, lng = centerLng + 0.0001, pedestrians = 310, cyclists = 30, vehicles = 160, total = 500, weight = 500 });
+                markers.Add(new { slug = "demo-e", lat = centerLat + 0.0001, lng = centerLng - 0.0007, pedestrians = 360, cyclists = 45, vehicles = 245, total = 650, weight = 650 });
+
+                usedRealCoords = 0;
+                usedFallbackCoords = markers.Count;
             }
 
-            Console.WriteLine($"HeatPoints Generated: {heatPoints.Count}");
-            Console.WriteLine("=====================");
+            int low = 0, mid = 0, high = 0;
+            foreach (var p in heatPoints)
+            {
+                var intensity = p.Length >= 3 ? p[2] : 0.0;
+                if (intensity < 0.35) low++;
+                else if (intensity < 0.70) mid++;
+                else high++;
+            }
 
-            // SEND TO VIEW
             ViewData["Zone"] = safeZone;
             ViewData["Period"] = safePeriod;
             ViewData["CenterLat"] = centerLat;
             ViewData["CenterLng"] = centerLng;
             ViewData["HeatPointsJson"] = JsonSerializer.Serialize(heatPoints);
+            ViewData["MarkersJson"] = JsonSerializer.Serialize(markers);
+
+            ViewData["PointsCount"] = heatPoints.Count;
+            ViewData["LowCount"] = low;
+            ViewData["MidCount"] = mid;
+            ViewData["HighCount"] = high;
+
+            ViewData["RealCoordsCount"] = usedRealCoords;
+            ViewData["FallbackCoordsCount"] = usedFallbackCoords;
+            ViewData["ZoneSensorsCount"] = zoneSensorSlugSet.Count;
 
             return View("~/Views/Heatmap/HeatmapView.cshtml");
         }

@@ -6,10 +6,16 @@ namespace SmartTrafficMonitor.Models
     {
         public TrafficFilterModel Filters { get; set; } = new();
 
-        // ✅ ADD THIS
         public List<string> AvailableSensors { get; set; } = new();
 
-        // existing stuff...
+        // ✅ KPI fields
+        public long KpiTotalFootTraffic { get; set; }     // Pedestrians
+        public long KpiTotalCyclists { get; set; }        // NEW
+        public long KpiTotalVehicles { get; set; }
+        public long KpiRecordCount { get; set; }
+        public string KpiBusiestSensor { get; set; } = "—";
+        public string KpiPeakHour { get; set; } = "—";
+
         public List<TrafficData> Results { get; set; } = new();
         public int TotalCount { get; set; }
         public int Page { get; set; }

@@ -6,6 +6,12 @@
     var centerLat = (double)(ViewData["CenterLat"] ?? -37.7985);
     var centerLng = (double)(ViewData["CenterLng"] ?? 144.9015);
     var pointsJson = (string)(ViewData["HeatPointsJson"] ?? "[]");
+    var markersJson = (string)(ViewData["MarkersJson"] ?? "[]");
+
+    var pointsCount = (int)(ViewData["PointsCount"] ?? 0);
+    var lowCount = (int)(ViewData["LowCount"] ?? 0);
+    var midCount = (int)(ViewData["MidCount"] ?? 0);
+    var highCount = (int)(ViewData["HighCount"] ?? 0);
 }
 
 <!doctype html>
@@ -19,26 +25,99 @@
     <style>
         html, body { height: 100%; margin: 0; }
         #map { height: 100vh; width: 100%; }
-        .topbar {
+
+        .hud {
             position: absolute;
             top: 10px;
             left: 10px;
             z-index: 999;
-            background: rgba(255,255,255,0.95);
+            background: rgba(15, 26, 46, 0.88);
+            color: #fff;
             padding: 10px 12px;
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.25);
             font-family: Arial, sans-serif;
             font-size: 13px;
+            backdrop-filter: blur(6px);
         }
-        .topbar strong { display:block; font-size: 14px; }
-        .muted { color:#666; }
+        .hud strong { display:block; font-size: 14px; }
+        .hud .muted { color: rgba(255,255,255,0.75); }
+
+        .hud-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 999;
+            background: rgba(15, 26, 46, 0.88);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            display: inline-block;
+        }
+        .dot.low { background: #2D6CDF; }
+        .dot.mid { background: #8B5CF6; }
+        .dot.high { background: #F59E0B; }
+
+        .toggle { cursor: pointer; user-select: none; }
+
+        .leaflet-tooltip.stm-tip {
+            background: rgba(15, 26, 46, 0.92);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+        .leaflet-tooltip.stm-tip:before { border-top-color: rgba(15, 26, 46, 0.92); }
+
+        .tip-muted { color: rgba(255,255,255,0.75); font-size: 11px; }
+
+        .tip-row { display:flex; justify-content:space-between; gap:12px; }
+        .tip-row span { white-space:nowrap; }
+        .tip-total { margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.12); font-weight:700; }
     </style>
 </head>
 <body>
-    <div class="topbar">
+    <div class="hud">
         <strong>Heatmap Preview</strong>
         <div class="muted">@zone • @period</div>
+    </div>
+
+    <div class="hud-right">
+        <span class="pill">Points: <strong id="pointsCount">@pointsCount</strong></span>
+
+        <span class="pill"><span class="dot low"></span> low <strong id="lowCount">@lowCount</strong></span>
+        <span class="pill"><span class="dot mid"></span> mid <strong id="midCount">@midCount</strong></span>
+        <span class="pill"><span class="dot high"></span> high <strong id="highCount">@highCount</strong></span>
+
+        <span class="pill toggle" id="toggleMarkers">Markers: <strong id="markersState">on</strong></span>
     </div>
 
     <div id="map"></div>
@@ -49,7 +128,11 @@
     <script>
         const centerLat = @centerLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
         const centerLng = @centerLng.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
         const heatPoints = @Html.Raw(pointsJson);
+        const markers = @Html.Raw(markersJson);
+
+        document.getElementById("pointsCount").textContent = Array.isArray(heatPoints) ? heatPoints.length : 0;
 
         const map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 15);
 
@@ -58,12 +141,106 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-
-        const heat = L.heatLayer(heatPoints, {
+        L.heatLayer(heatPoints, {
             radius: 30,
             blur: 22,
             maxZoom: 17
         }).addTo(map);
+
+        const markerLayer = L.layerGroup().addTo(map);
+
+        function prettySensor(slug) {
+            if (!slug) return "";
+            return String(slug)
+                .trim()
+                .replace(/_/g, "-")
+                .split("-")
+                .filter(Boolean)
+                .map(w => {
+                    const lw = w.toLowerCase();
+                    if (lw === "st") return "St";
+                    if (lw === "stn") return "Station";
+                    if (lw === "rd") return "Rd";
+                    if (lw === "ave") return "Ave";
+                    if (lw === "mt") return "Mt";
+                    if (lw === "vu") return "VU";
+                    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                })
+                .join(" ");
+        }
+
+        function num(v) {
+            const x = Number(v);
+            return isFinite(x) ? x : 0;
+        }
+
+        function fmt(v) {
+            const x = Number(v);
+            return isFinite(x) ? x.toLocaleString() : "—";
+        }
+
+        function addMarkers() {
+            markerLayer.clearLayers();
+            if (!Array.isArray(markers)) return;
+
+            markers.forEach(m => {
+                if (!m) return;
+
+                const lat = Number(m.lat);
+                const lng = Number(m.lng);
+                if (!isFinite(lat) || !isFinite(lng)) return;
+
+                const name = prettySensor(m.slug) || (m.slug || "sensor");
+
+                const hasDetailed =
+                    ("pedestrians" in m) || ("cyclists" in m) || ("vehicles" in m) || ("total" in m);
+
+                let html = `<div><strong>${name}</strong>`;
+
+                if (hasDetailed) {
+                    const ped = fmt(m.pedestrians);
+                    const cyc = fmt(m.cyclists);
+                    const veh = fmt(m.vehicles);
+
+                    const totalVal = ("total" in m) ? num(m.total) : (num(m.pedestrians) + num(m.cyclists) + num(m.vehicles));
+                    const total = totalVal.toLocaleString();
+
+                    html +=
+                        `<div class="tip-row"><span>Pedestrians</span><span>${ped}</span></div>` +
+                        `<div class="tip-row"><span>Cyclists</span><span>${cyc}</span></div>` +
+                        `<div class="tip-row"><span>Vehicles</span><span>${veh}</span></div>` +
+                        `<div class="tip-total tip-row"><span>Total</span><span>${total}</span></div>`;
+                } else {
+                    const w = ("weight" in m) ? fmt(m.weight) : "—";
+                    html += `<div class="tip-row"><span>Weight</span><span>${w}</span></div>`;
+                }
+
+                html += `<div class="tip-muted" style="margin-top:6px;">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>`;
+                html += `</div>`;
+
+                L.circleMarker([lat, lng], {
+                    radius: 6,
+                    weight: 2,
+                    opacity: 0.95,
+                    fillOpacity: 0.55
+                })
+                .bindTooltip(html, { direction: "top", sticky: true, opacity: 0.95, className: "stm-tip" })
+                .addTo(markerLayer);
+            });
+        }
+
+        addMarkers();
+
+        let markersOn = true;
+        const toggleBtn = document.getElementById("toggleMarkers");
+        const markersState = document.getElementById("markersState");
+
+        toggleBtn.addEventListener("click", () => {
+            markersOn = !markersOn;
+            markersState.textContent = markersOn ? "on" : "off";
+            if (markersOn) markerLayer.addTo(map);
+            else map.removeLayer(markerLayer);
+        });
     </script>
 </body>
 </html>

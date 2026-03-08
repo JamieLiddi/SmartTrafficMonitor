@@ -224,6 +224,12 @@ namespace SmartTrafficMonitor.Services
     // data access service
     public static class DataService
     {
+        // lets controllers reuse the exact same filtering query (for KPIs, charts, etc.)
+        public static IQueryable<TrafficData> GetFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
+        {
+            return BuildFilteredQuery(context, filters);
+        }
+
         // full filtered list
         public static List<TrafficData> GetFilteredData(ApplicationDbContext context, TrafficFilterModel? filters)
         {
@@ -270,30 +276,48 @@ namespace SmartTrafficMonitor.Services
         // Shared filtering logic
         private static IQueryable<TrafficData> BuildFilteredQuery(ApplicationDbContext context, TrafficFilterModel? filters)
         {
-            var q = context.TrafficDatas.AsQueryable();
+            // AsNoTracking: faster for dashboard reads
+            var q = context.TrafficDatas.AsNoTracking().AsQueryable();
 
             if (filters == null)
                 return q;
 
+            // Normalize string filters (trim + empty => null)
+            static string? Norm(string? s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return null;
+                return s.Trim();
+            }
+
+            filters.SensorId = Norm(filters.SensorId);
+            filters.MovementType = Norm(filters.MovementType);
+            filters.Direction = Norm(filters.Direction);
+            filters.Season = Norm(filters.Season);
+
             var from = filters.From ?? filters.TimeStampStart ?? filters.TimeStamp;
             var to = filters.To ?? filters.TimeStampEnd ?? filters.TimeStamp;
 
-            if (from.HasValue)
-                from = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
+            // Only specify UTC kind if it's unspecified (avoid breaking already-UTC values)
+            static DateTime EnsureUtcKind(DateTime dt)
+            {
+                if (dt.Kind == DateTimeKind.Unspecified)
+                    return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                return dt;
+            }
 
-            if (to.HasValue)
-                to = DateTime.SpecifyKind(to.Value, DateTimeKind.Utc);
+            if (from.HasValue) from = EnsureUtcKind(from.Value);
+            if (to.HasValue) to = EnsureUtcKind(to.Value);
 
-            if (!string.IsNullOrWhiteSpace(filters.SensorId))
+            if (filters.SensorId != null)
                 q = q.Where(t => t.SensorId == filters.SensorId);
 
-            if (!string.IsNullOrWhiteSpace(filters.MovementType))
+            if (filters.MovementType != null)
                 q = q.Where(t => t.MovementType == filters.MovementType);
 
-            if (!string.IsNullOrWhiteSpace(filters.Direction))
+            if (filters.Direction != null)
                 q = q.Where(t => t.Direction == filters.Direction);
 
-            if (!string.IsNullOrWhiteSpace(filters.Season))
+            if (filters.Season != null)
                 q = q.Where(t => t.Season == filters.Season);
 
             if (filters.PublicTransportRef.HasValue)
