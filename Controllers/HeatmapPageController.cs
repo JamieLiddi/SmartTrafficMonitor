@@ -197,7 +197,7 @@ namespace SmartTrafficMonitor.Controllers
                     weight = s.Weight
                 });
             }
-
+            // If no data points, add some demo points around the center
             if (heatPoints.Count == 0)
             {
                 heatPoints.Add(new[] { centerLat + 0.0006, centerLng + 0.0006, 0.8 });

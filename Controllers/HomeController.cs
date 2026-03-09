@@ -24,7 +24,7 @@ namespace SmartTrafficMonitor.Controllers
         {
             filters ??= new TrafficFilterModel();
 
-            // ✅ Normalize string filters (trim + empty => null)
+            //  Clean up empty values from the dashboard form
             static string? Norm(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
             filters.SensorId = Norm(filters.SensorId);
@@ -40,7 +40,7 @@ namespace SmartTrafficMonitor.Controllers
 
             var hasAnyQueryFilters = Request?.Query != null && Request.Query.Count > 0;
 
-            // Default window: last 7 days anchored at latest DB timestamp
+            //  Default window: last 7 days anchored at latest DB timestamp
             if (!hasAnyQueryFilters)
             {
                 var latestTs = _context.TrafficDatas
@@ -73,7 +73,7 @@ namespace SmartTrafficMonitor.Controllers
                 };
             }
 
-            // ✅ Sensor dropdown values (from TrafficDatas so it matches real data)
+            //  Sensor dropdown values (from TrafficDatas so it matches real data)
             var sensors = _context.TrafficDatas
                 .AsQueryable()
                 .Select(t => t.SensorId)
@@ -82,10 +82,10 @@ namespace SmartTrafficMonitor.Controllers
                 .OrderBy(id => id)
                 .ToList();
 
-            // Insert blank option so UI can show "(any)"
+            //  Insert blank option so UI can show "(any)"
             sensors.Insert(0, "");
 
-            // ✅ KPIs
+            //  KPI Values.
             long kpiTotalFoot = 0;
             long kpiTotalCyclists = 0;
             long kpiTotalVeh = 0;
@@ -95,11 +95,11 @@ namespace SmartTrafficMonitor.Controllers
 
             try
             {
-                // Records = same filters as the table (including MovementType if user set it)
+                //  Records = same filters as the table (including MovementType if user set it)
                 var tableQuery = DataService.GetFilteredQuery(_context, filters);
                 kpiRecordCount = tableQuery.LongCount();
 
-                // Base KPI filters ignore MovementType so KPIs don’t zero each other out
+                //  Base KPI filters ignore MovementType so KPIs don’t zero each other out
                 var baseKpiFilters = new TrafficFilterModel
                 {
                     SensorId = filters.SensorId,
@@ -141,16 +141,16 @@ namespace SmartTrafficMonitor.Controllers
                 var cycQuery = DataService.GetFilteredQuery(_context, MakeTypeFilters("Cyclist"));
                 var vehQuery = DataService.GetFilteredQuery(_context, MakeTypeFilters("Vehicle"));
 
-                // ✅ Pedestrians: FootTrafficCount on Pedestrian rows
+                // Pedestrians: FootTrafficCount on Pedestrian rows
                 kpiTotalFoot = pedQuery.Select(x => (long)x.FootTrafficCount).Sum();
 
-                // ✅ Cyclists: FootTrafficCount on Cyclist rows (matches your DB structure)
+                // Cyclists: FootTrafficCount on Cyclist rows (matches your DB structure)
                 kpiTotalCyclists = cycQuery.Select(x => (long)x.FootTrafficCount).Sum();
 
-                // ✅ Vehicles: VehicleCount on Vehicle rows
+                // Vehicles: VehicleCount on Vehicle rows
                 kpiTotalVeh = vehQuery.Select(x => (long)x.VehicleCount).Sum();
 
-                // Busiest + peak hour use combined volume across ALL movement types
+                //  Busiest + peak hour use combined volume across ALL movement types
                 var combinedQuery = DataService.GetFilteredQuery(_context, baseKpiFilters);
 
                 var busiest = combinedQuery
@@ -185,7 +185,7 @@ namespace SmartTrafficMonitor.Controllers
             }
             catch (Exception ex)
             {
-                // KPI failure should never break the page
+                //  KPI failure should never break the page
                 _logger.LogError(ex, "Error computing KPI values");
             }
 
@@ -201,7 +201,7 @@ namespace SmartTrafficMonitor.Controllers
 
                 AvailableSensors = sensors,
 
-                // KPIs
+                //  KPIs
                 KpiTotalFootTraffic = kpiTotalFoot,
                 KpiTotalCyclists = kpiTotalCyclists,
                 KpiTotalVehicles = kpiTotalVeh,
@@ -213,7 +213,7 @@ namespace SmartTrafficMonitor.Controllers
                 FallbackMessage = ""
             };
 
-            // Fallback: if user chose a window with no results, show last-known data
+            //  Fallback: if user chose a window with no results, show last-known data
             if (vm.Results != null && vm.Results.Count == 0 && filters.From.HasValue && filters.To.HasValue)
             {
                 try

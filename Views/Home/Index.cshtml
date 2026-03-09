@@ -210,7 +210,6 @@
                                 <option value="@s" selected="@(f.SensorId == s ? "selected" : null)">@prettySensor(s)</option>
                             }
                         </select>
-                        <div class="help-text">Pick a sensor to filter results.</div>
                     </div>
 
                     <div class="col-md-3">
@@ -253,7 +252,6 @@
                         <input type="number" id="FootTrafficCount" name="FootTrafficCount" class="form-control"
                                min="0" step="1" placeholder="(any)"
                                value="@(f.FootTrafficCount?.ToString() ?? "")" />
-                        <div class="help-text">Shows rows with foot traffic greater than or equal to this value.</div>
                     </div>
 
                     <div class="col-md-3">
@@ -261,7 +259,6 @@
                         <input type="number" id="VehicleCount" name="VehicleCount" class="form-control"
                                min="0" step="1" placeholder="(any)"
                                value="@(f.VehicleCount?.ToString() ?? "")" />
-                        <div class="help-text">Shows rows with vehicle count greater than or equal to this value.</div>
                     </div>
 
                     <div class="col-md-3">

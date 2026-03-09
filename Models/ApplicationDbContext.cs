@@ -37,10 +37,7 @@ namespace SmartTrafficMonitor.Models
             modelBuilder.Entity<TrafficData>().HasIndex(t => t.Season);
 
 
-            //SensorId is NOT auto-generated (it’s a sensor identifier)
-            // modelBuilder.Entity<TrafficData>()
-            //     .Property(t => t.SensorId)
-            //     .ValueGeneratedNever();
+      
         }
     }
 }

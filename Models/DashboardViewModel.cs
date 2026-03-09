@@ -8,7 +8,7 @@ namespace SmartTrafficMonitor.Models
 
         public List<string> AvailableSensors { get; set; } = new();
 
-        // ✅ KPI fields
+        // KPI fields
         public long KpiTotalFootTraffic { get; set; }     // Pedestrians
         public long KpiTotalCyclists { get; set; }        // NEW
         public long KpiTotalVehicles { get; set; }

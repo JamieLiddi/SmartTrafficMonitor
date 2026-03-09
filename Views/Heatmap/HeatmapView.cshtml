@@ -134,6 +134,11 @@
 
         document.getElementById("pointsCount").textContent = Array.isArray(heatPoints) ? heatPoints.length : 0;
 
+
+
+
+
+// Count low/mid/high points based on weight (assuming weight is at index 2)
         const map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -178,6 +183,7 @@
             const x = Number(v);
             return isFinite(x) ? x.toLocaleString() : "—";
         }
+
 
         function addMarkers() {
             markerLayer.clearLayers();
